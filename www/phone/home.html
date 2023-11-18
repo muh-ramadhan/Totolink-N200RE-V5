@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="proma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no cache" />
+    <meta http-equiv="expires" content="0" />
+    <meta
+      content="width=device-width,initial-scale=1,user-scalable=no"
+      name="viewport"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1"
+    />
+    <link rel="stylesheet" href="/static/css/phone/home.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="text/x-template" id="main">
+      <div>
+        <div class="fun-icon cpu">
+          <svg width="130" height="90" xmlns="http://www.w3.org/2000/svg">
+            <text style="fill:#fff;" font-size="15" x="90" y="40" width="90" height="90">{{ cpuOccupy }}%</text>
+            <text style="fill:#fff;" font-size="15" x="90" y="60" width="90" height="90">
+            CPU
+            </text>
+            <circle
+              cx="40"
+              cy="40"
+              r="34"
+              stroke-width="12"
+              stroke="#5998fc"
+              fill="none">
+            </circle>
+            <circle
+              cx="40"
+              cy="40"
+              r="34"
+              stroke-width="12"
+              stroke="#9dcafa"
+              fill="none"
+              transform="matrix(0,-1,1,0,0,80)"
+              stroke-dasharray=""
+              :style="cpuOccupyPercent">
+          </circle>
+          </svg>
+        </div>
+
+        <div class="fun-icon ram">
+          <svg width="130" height="90">
+            <text style="fill:#fff;" font-size="15" x="90" y="34" width="90" height="90">{{ ramOccupy }}%</text>
+            <text style="fill:#fff;" font-size="15" x="90" y="60" width="90" height="90">RAM</text>
+            <circle
+              cx="40"
+              cy="40"
+              r="34"
+              stroke-width="12"
+              stroke="#5998fc"
+              fill="none">
+            </circle>
+            <circle
+              cx="40"
+              cy="40"
+              r="34"
+              stroke-width="12"
+              stroke="#9dcafa"
+              fill="none"
+              transform="matrix(0,-1,1,0,0,80)"
+              stroke-dasharray=""
+              :style="ramOccupyPercent">
+            </circle>
+          </svg>
+        </div>
+        <div @click.stop="goHref('info')">
+          <div class="fun-icon router" v-if="model=='C8180R'||model=='A720R'||model=='A710R'||model=='C818ZR'||hardModel == 'IP04432'" style="background-image: url('/static/images/phone/C8180R.png');"></div>
+          <div class="fun-icon router" v-else-if="model=='C8343R'||hardModel=='IP04433'" style="background-image: url('/static/images/phone/C8343R.png');"></div>
+      	  <div class="fun-icon router" v-else-if="model=='N350RT'" style="background-image: url('/static/images/phone/N350RT.png');"></div>
+      	  <div class="fun-icon router" v-else-if="model=='N200RE'" style="background-image: url('/static/images/phone/N200RE.png');"></div>
+        </div>
+       <div class="fun-icon speed_up" v-show="globalConfig.opmode == 'gw'">
+          <a>{{ upOccupy }}</a>
+        </div>
+        <div class="fun-icon speed_down" v-show="globalConfig.opmode == 'gw'">
+          <a>{{ downOccupy }}</a>
+        </div>
+        <div class="fun-icon list">
+          <div class="content-home">
+            <div>
+              <div class="home row" @click="goHref('wan')" v-show="globalConfig.opmode == 'gw'">
+                <img class="home-l" src="/static/images/phone/internet.png">
+                <div class="home-c">
+                  <span>{{ lang_t('menu.wan') }}</span>
+                </div>
+                <img class="home-r" src="/static/images/phone/sign_right.png">
+              </div>
+              <div class="home row" @click="goHref('wifi')">
+                <img class="home-l" src="/static/images/phone/wifi.png">
+                <div class="home-c">
+                  <span>{{ lang_t('menu.wifi_vi') }}</span>
+                </div>
+                <img class="home-r" src="/static/images/phone/sign_right.png">
+              </div>
+              <div class="home row" @click="goHref('opmode')" v-if="globalConfig.opmodeSupport">
+                <img class="home-l" src="/static/images/phone/opmode.png">
+                <div class="home-c">
+                  <span>{{ lang_t('menu.opmode') }}</span>
+                </div>
+                <img class="home-r" src="/static/images/phone/sign_right.png">
+              </div>
+              <div class="home row" @click="goHref('device')" v-show="globalConfig.opmode == 'gw'">
+                <img class="home-l" src="/static/images/phone/devices.png">
+                <div class="home-c">
+                  <span>{{ lang_t('menu.devices') }}</span>
+                </div>
+                <img class="home-r" src="/static/images/phone/sign_right.png">
+              </div>
+              <div class="home row" @click="pcBtnFun" v-show="showPc">
+                <img class="home-l" src="/static/images/phone/desktop.png">
+                <div class="home-c">
+                  <span>{{ lang_t('menu.pc_version') }}</span>
+                </div>
+                <img class="home-r" src="/static/images/phone/sign_right.png">
+              </div>
+            </div>
+      	  </div>
+        </div>
+        <div class="fun-icon list1">
+          <div class="content-home">
+            <div class="fun-icon tools" @click="goHref('tools')">
+              <a>{{ lang_t('menu.tools') }}</a>
+            </div>
+            <div class="fun-icon application_nogw" @click="goHref('application')" v-if="globalConfig.opmode !='gw'">
+              <a>{{ lang_t('menu.application') }}</a>
+            </div>
+            <div class="fun-icon application" @click="goHref('application')" v-if="globalConfig.opmode =='gw'">
+              <a>{{ lang_t('menu.application') }}</a>
+            </div>
+            <div class="fun-icon wizard" @click="goHref('wizard')" v-if="globalConfig.opmode=='gw'">
+              <a>{{ lang_t('menu.wizard') }}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </script>
+    <script src="/plugin/vue.js"></script>
+    <script src="/plugin/jquery-3.2.1.min.js"></script>
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/phone_layout.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/topicurl.js"></script>
+    <script>
+      var cs_main = {
+        template: "#main",
+        data: function () {
+          return {
+            globalConfig: globalConfig,
+            lang: $.lang,
+            lang_t: lang_t,
+            cpuOccupyPercent: {
+              "stroke-dasharray":
+                2 * Math.PI * 34 * 0.7 + " " + 2 * Math.PI * 34 * (1 - 0.7),
+            },
+            ramOccupyPercent: {
+              "stroke-dasharray":
+                2 * Math.PI * 34 * 0.7 + " " + 2 * Math.PI * 34 * (1 - 0.7),
+            },
+            cpuOccupy: 0,
+            ramOccupy: 0,
+            model: "",
+            hardModel: "",
+            userNum: 0,
+            upOccupy: 0,
+            downOccupy: 0,
+            showPc: !0,
+          };
+        },
+        created: function () {
+          var c = this,
+            t = navigator.userAgent,
+            a = -1 < t.indexOf("Manage_App"),
+            n = !!t.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/),
+            e = -1 < t.indexOf("Safari");
+          (self != top || a || (n && !e)) && (this.showPc = !1),
+            c.netInit(),
+            setInterval(function () {
+              c.netInit();
+            }, 5e3),
+            uiPost.getSysStatusCfg(function (t) {
+              (c.model = t.model), (c.hardModel = t.hardModel);
+            });
+        },
+        methods: {
+          goHref: function (t) {
+            location.href = t + ".html" + get_token_from_url();
+          },
+          netInit: function () {
+            var a = this;
+            uiPost.getNetInfoCfg(function (t) {
+              if (null == t.cpuRatio) return !1;
+              (a.cpuOccupy = Math.round(Number(t.cpuRatio))),
+                (a.ramOccupy = Math.round(Number(t.memRatio))),
+                (a.userNum = t.lanUserNum);
+              var c = 2 * Math.PI * 34;
+              (a.cpuOccupyPercent = {
+                "stroke-dasharray":
+                  (c * a.cpuOccupy) / 100 + " " + c * (1 - a.cpuOccupy / 100),
+              }),
+                (a.ramOccupyPercent = {
+                  "stroke-dasharray":
+                    (c * a.ramOccupy) / 100 + " " + c * (1 - a.ramOccupy / 100),
+                }),
+                (a.upOccupy = getFlow(1024 * Number(t.up))),
+                (a.downOccupy = getFlow(1024 * Number(t.down)));
+            });
+          },
+          pcBtnFun: function () {
+            Cstool.Mark({
+              content: this.lang_t("menu.pc_msg"),
+              ok: function () {
+                location.href = "/basic/index.html" + get_token_from_url();
+              },
+            });
+          },
+        },
+      };
+    </script>
+    <script src="/static/js/main.js"></script>
+  </body>
+</html>

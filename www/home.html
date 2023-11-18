@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <script src="/plugin/vue.js"></script>
+    <script src="/plugin/jquery-3.2.1.min.js"></script>
+    <script src="/plugin/Chart.min.js"></script>
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/phone_layout.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/topicurl.js"></script>
+    <script>
+      uiPost.getInitCfg(function (t) {
+        window.location.href = "/basic/index.html" + get_token_from_url();
+      });
+    </script>
+  </body>
+</html>

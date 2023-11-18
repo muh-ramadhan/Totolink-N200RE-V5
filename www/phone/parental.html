@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="proma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no cache" />
+    <meta http-equiv="expires" content="0" />
+    <meta
+      content="width=device-width,initial-scale=1,user-scalable=no"
+      name="viewport"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1"
+    />
+    <link rel="stylesheet" href="/static/css/phone/style.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="text/x-template" id="main">
+      <div>
+        <div class="toper">
+      	<phone-back type="custom" :title="lang_t('menu.application')" @on-click="backFun"></phone-back>
+        </div>
+        <div class="nav">
+      	<div style="float:left;width:83%;">{{ lang_t('menu.parental') }}</div>
+      	<div class="nav-sw" v-show="editState == 'list'">
+      	  <x-switch v-model="parentalState" @change="applyBtn('switch')"></x-switch>
+      	</div>
+        </div>
+        <div class="nav" v-show="homepage&&parentalState" style="color: #000;font-weight:normal;" @click="addBtn">
+      	<img src="/static/images/phone/open.png">
+      	&nbsp;&nbsp;{{ lang_t('common.add_rules') }}
+        </div>
+        <div v-show="parentalState">
+          <div class="content-list" v-show="homepage" :style="{height: listHeight,'overflow-y':'auto'}">
+      	  <div class="list" v-for="(data,v) in data" @click="showBtn(data,v)">
+      	    <div class="list-l" style="padding-top: 9%;">
+      		  <img src="/static/images/phone/phone.png" v-if="data.deviceType == 'mobile'">
+      		  <img src="/static/images/phone/pc.png" v-else>
+      	    </div>
+      	    <div class="list-c">
+      		  <p>{{ data.desc }}</p>
+      		  <p>{{ timeConver('week',data.time) }} ({{ timeConver('time',data.time) }})</p>
+      		  <p v-if="globalConfig.pageOptimize =='1'">{{ lang_t('rule.online_time') }}: {{ data.link=='0' ? lang_t('rule.offline') : reTime(data.linkTime) }}</p>
+      		  <br v-else>
+      		  <!--<p v-if="globalConfig.pageOptimize =='1'">{{ lang_t('rule.internet_access') }}:{{ data.state=='0' ? lang_t('rule.deny') : lang_t('rule.allow') }}</p>-->
+      		  <p>MAC: {{ data.mac }}</p>
+      	    </div>
+      	    <div class="list-r-img" style="padding-top:12%;">
+      		  <x-icon :type="data.linkTime != '0'?'tick':'dis'" ></x-icon>
+      	    </div>
+      	    <div class="list-r"  style="padding-top:12%;">
+      		  <img src="/static/images/phone/sign_right.png">
+      	    </div>
+      	  </div>
+          </div>
+          <div class="content" v-show="!homepage">
+      	  <div class="group">
+      	    <div class="item-l">{{ lang_t('rule.description') }}</div>
+      	    <div class="item-r">
+      		  <input type="text" v-model="name" :maxlength="descLen">
+      	    </div>
+      	  </div>
+      	  <div class="group">
+      	    <div class="item-l">MAC</div>
+      	    <div class="item-r">
+      		  <input type="text" v-model="mac" :maxlength="17">
+      	    </div>
+      	  </div>
+      	  <div class="group" v-show="listData.length!=0">
+      	    <div class="item-l">{{ lang_t('rule.user_list') }}</div>
+      	    <div class="item-r">
+      		  <select id="link_id" v-model="listIndex" @change="userListChange">
+      		    <option v-for="(user,v) in listData" :value="v">
+      		    <div>{{ user.mac }}</div>&nbsp;&nbsp;
+      		    <div>{{ user.name ? user.name : lang_t('common.aonymous_user') | filling }}</div>
+      		    </option>
+      	      </select>
+      	    </div>
+      	  </div>
+      	  <div class="group" v-if="globalConfig.pageOptimize =='1'" v-show="listData.length!=0">
+      	    <div class="item-l">{{ lang_t('rule.internet_access') }}</div>
+      	    <div class="item-r">
+      		  <select v-model="status">
+      		    <option value="0">{{ lang_t('rule.deny') }}</option>
+      		    <option value="1">{{ lang_t('rule.allow') }}</option>
+      		  </select>
+      	    </div>
+      	  </div>
+      	  <div class="group">
+      	    <div style="float:left;font-size:14px;">
+      		  {{ lang_t('rule.schedule') }}:
+      	      <x-checkbox style="margin:14px;" v-model="selectall" @change="selectAllBtn" k_class="default">
+      		    {{ lang_t('rule.every') }}
+      		  </x-checkbox>
+      	    </div>
+      		<br>&nbsp;</br>
+      	    <div v-for="(week,index) in 7">
+      	      <div style="float:left;font-size:12px;">
+      	  	    <x-checkbox style="margin:12px;padding-left:45px;" v-model="select[index]" @change="selectClick(index)" k_class="default">
+      		      {{ lang_t('rule.'+weekArr[index]) }}
+      		    </x-checkbox>
+      		  </div>
+      	    </div>
+      	  </div>
+      	  <div class="group"></div>
+      	  <div class="group" style="height: 36px;"></div>
+      	  <div class="group">
+      	    <div class="item-l">{{ lang_t('schedule.start_time') }}</div>
+      	    <div class="item-r">
+      		  <select v-model="stime1" style="width:86px;">
+      		    <option v-for="(m,t) in 24" :value="t">{{t < 10 ? '0'+t : t}}{{ lang_t('schedule.hour') }}</option>
+      		  </select> :
+      		  <select v-model="stime2" style="width:86px;">
+      		    <option v-for="(m,t) in 60" :value="t">{{t < 10 ? '0'+t : t}}{{ lang_t('schedule.min') }}</option>
+      		  </select>
+      	    </div>
+      	  </div>
+      	  <div class="group">
+      	    <div class="item-l">{{ lang_t('schedule.end_time') }}</div>
+      	    <div class="item-r">
+      		  <select v-model="etime1" style="width:86px;">
+      		    <option v-for="(m,t) in 24" :value="t">{{t < 10 ? '0'+t : t}}{{ lang_t('schedule.hour') }}</option>
+      		  </select> :
+      		  <select v-model="etime2" style="width:86px;">
+      		    <option v-for="(m,t) in 60" :value="t">{{t < 10 ? '0'+t : t}}{{ lang_t('schedule.min') }}</option>
+      		  </select>
+      	    </div>
+      	  </div>
+      	  <div class="group">
+      	    <div class="item-tips">
+      	      <b>{{lang_t('common.tips')}}: </b>
+      	      {{lang_t('rule.parental_tips')}}
+      	    </div>
+      	  </div>
+      	  <div class="group"></div>
+      	  <div class="space"></div>
+      	  <div class="footer">
+      	    <button class="btn" :disabled="addbtn" @click="applyBtn">{{ lang_t('common.apply') }}</button><br>&nbsp;<br>
+      	    <button class="btn btn-red" v-show="this.tempIdx !== ''" @click="deleteBtn">{{ lang_t('common.delete') }}</button>
+      	  </div>
+      	  <div class="space"></div>
+          </div>
+        </div>
+      </div>
+    </script>
+    <script src="/plugin/vue.js"></script>
+    <script src="/plugin/jquery-3.2.1.min.js"></script>
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/phone_layout.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/topicurl.js"></script>
+    <script>
+      var cs_main = {
+        template: "#main",
+        data: function () {
+          return {
+            globalConfig: globalConfig,
+            lang: $.lang,
+            lang_t: lang_t,
+            listHeight: "300px",
+            data: [],
+            homepage: !0,
+            tempIdx: 0,
+            editState: "list",
+            parentalState: !1,
+            status: "",
+            select: [],
+            selectall: !1,
+            name: "",
+            mac: "",
+            stime1: "0",
+            stime2: "0",
+            etime1: "0",
+            etime2: "0",
+            listIndex: null,
+            listData: [],
+            weekEdit: [],
+            editsHour: [],
+            editsMin: [],
+            editeHour: [],
+            editeMin: [],
+            weekArr: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+            descLen: globalConfig.descLen,
+            addbtn: !1,
+          };
+        },
+        computed: {},
+        created: function () {
+          var a = this;
+          (a.listHeight = 0.8 * window.innerHeight + "px"),
+            uiPost.getParentalRules(function (t) {
+              var e, i, s;
+              for (var n in ((a.maxRule = t.maxRule || 32),
+              (a.parentalState = "1" == t.enable),
+              (a.data = t.rule),
+              a.data))
+                (e = a.data[n].time.split(",")),
+                  (a.weekEdit[n] = e[0]),
+                  (i = e[1].split(":")),
+                  (s = e[2].split(":")),
+                  (a.editsHour[n] = String(Number(i[0]))),
+                  (a.editsMin[n] = String(Number(i[1]))),
+                  (a.editeHour[n] = String(Number(s[0]))),
+                  (a.editeMin[n] = String(Number(s[1])));
+            }),
+            this.scanFun();
+        },
+        mounted: function () {
+          var s = this;
+          if (/iphone|ipod|ipad/i.test(navigator.appVersion))
+            for (
+              var t = document.querySelectorAll("select"), e = 0;
+              e < t.length;
+              e++
+            )
+              t[e].addEventListener("blur", function (t) {
+                for (var e = !1, i = 0; i < this.options.length; i++)
+                  if (this.selectedIndex == this.options[i].value) {
+                    e = !0;
+                    break;
+                  }
+                e ||
+                  ($(this).val(this.options[0].value),
+                  "link_id" == this.id &&
+                    ((s.listIndex = this.options[0].value),
+                    s.userListChange()));
+              });
+        },
+        methods: {
+          backFun: function () {
+            this.homepage
+              ? (location.href =
+                  "/phone/application.html" + get_token_from_url())
+              : ((this.homepage = !0), (this.editState = "list"));
+          },
+          userListChange: function () {
+            var t = this.listData[this.listIndex];
+            (this.name = t.name.slice(0, 20)), (this.mac = t.mac);
+          },
+          scanFun: function () {
+            var e = this;
+            uiPost.getOnlineMsg(function (t) {
+              e.listData = t;
+            });
+          },
+          addBtn: function () {
+            if (this.homepage) {
+              (this.listIndex = ""),
+                (this.editState = "add"),
+                (this.homepage = !1),
+                (this.name = ""),
+                (this.mac = "");
+              for (var t = 0; t < 7; t++) this.select[t] = !1;
+              (this.selectall = !1),
+                (this.stime1 = "0"),
+                (this.stime2 = "0"),
+                (this.etime1 = "0"),
+                (this.etime2 = "0"),
+                (this.tempIdx = "");
+            }
+          },
+          showBtn: function (t, e) {
+            if (this.parentalState) {
+              var i = this;
+              if (this.homepage) {
+                for (var s in ((this.listIndex = ""), this.listData))
+                  if (this.listData[s].mac == t.mac) {
+                    this.listIndex = s;
+                    break;
+                  }
+                (this.tempIdx = e),
+                  (this.editState = "edit"),
+                  (this.homepage = !1),
+                  (this.name = t.desc),
+                  (this.mac = t.mac),
+                  (this.status = t.state);
+                var n = t.time.split(","),
+                  a = n[0].split(";");
+                7 <= a.length && (a = ["0"]),
+                  (i.select = [!1, !1, !1, !1, !1, !1, !1]);
+                for (var l = 0; l < 8; l++)
+                  for (var o in a)
+                    "0" == a[o] ? (i.selectall = !0) : (i.selectall = !1),
+                      "0" != l && a[o] == l && (i.select[l - 1] = !0);
+                1 == i.selectall && (i.select = [!0, !0, !0, !0, !0, !0, !0]);
+                var r = n[1].split(":"),
+                  h = n[2].split(":");
+                (this.stime1 = r[0]),
+                  (this.stime2 = r[1]),
+                  (this.etime1 = h[0]),
+                  (this.etime2 = h[1]);
+              }
+            }
+          },
+          timeConver: function (t, e) {
+            var i = "",
+              s = (e = e.split(","))[0].split(";");
+            for (var n in (7 <= s.length && (s = ["0"]), s))
+              "1" == s[n]
+                ? (i += this.lang_t("rule.mon") + " ")
+                : "2" == s[n]
+                ? (i += this.lang_t("rule.tue") + " ")
+                : "3" == s[n]
+                ? (i += this.lang_t("rule.wed") + " ")
+                : "4" == s[n]
+                ? (i += this.lang_t("rule.thu") + " ")
+                : "5" == s[n]
+                ? (i += this.lang_t("rule.fri") + " ")
+                : "6" == s[n]
+                ? (i += this.lang_t("rule.sat") + " ")
+                : "7" == s[n]
+                ? (i += this.lang_t("rule.sun") + " ")
+                : "0" == s[n] && (i += this.lang_t("rule.every") + " ");
+            return "time" == t
+              ? cs.checkTime(e[1]) + "-" + cs.checkTime(e[2])
+              : i;
+          },
+          reTime: function (t) {
+            var e = t.split(";"),
+              i = "";
+            return (
+              0 < e[0] && (i += e[0] + this.lang_t("index.day") + ","),
+              (0 < e[0] || 0 < e[1]) &&
+                (i += e[1] + this.lang_t("index.hour") + ","),
+              (0 < e[0] || e[1] || 0 < e[2]) &&
+                (i += e[2] + this.lang_t("index.min") + ","),
+              0 < e[3] && (i += e[3] + this.lang_t("index.sec")),
+              i
+            );
+          },
+          selectClick: function (t) {
+            var e = 0;
+            for (var i in this.select) this.select[i] && e++;
+            this.selectall = 7 == e;
+          },
+          selectAllBtn: function (t) {
+            for (var e = 0; e < 7; e++) this.select[e] = t;
+          },
+          applyBtn: function (t) {
+            var e = {};
+            if ("switch" == t)
+              this.parentalState ? (e.enable = "1") : (e.enable = "0"),
+                (e.addEffect = "1");
+            else {
+              var s = cs.commentstr(this.name);
+              if (1 == s || 2 == s)
+                return (
+                  Cstool.Mark({
+                    content: this.lang_t("rule.msg4"),
+                    l_text: this.lang_t("common.back"),
+                  }),
+                  !1
+                );
+              if (!this.mac || "" == this.mac)
+                return (
+                  Cstool.Mark({
+                    content:
+                      this.lang_t("rule.mac") + this.lang_t("rule.msg12"),
+                    l_text: this.lang_t("common.back"),
+                  }),
+                  !1
+                );
+              var n = cs.mac(this.mac);
+              if (1 == n)
+                return (
+                  Cstool.Mark({
+                    content: this.lang_t("rule.msg17"),
+                    l_text: this.lang_t("common.back"),
+                  }),
+                  !1
+                );
+              if (2 == n)
+                return (
+                  Cstool.Mark({
+                    content: this.lang_t("rule.msg18"),
+                    l_text: this.lang_t("common.back"),
+                  }),
+                  !1
+                );
+              if (3 == n)
+                return (
+                  Cstool.Mark({
+                    content: this.lang_t("rule.msg19"),
+                    l_text: this.lang_t("common.back"),
+                  }),
+                  !1
+                );
+              if (Number(this.stime1) > Number(this.etime1))
+                return (
+                  Cstool.Mark({
+                    content: this.lang_t("rule.msg28"),
+                    l_text: this.lang_t("common.back"),
+                  }),
+                  !1
+                );
+              if (
+                Number(this.stime1) == Number(this.etime1) &&
+                Number(this.stime2) >= Number(this.etime2)
+              )
+                return (
+                  Cstool.Mark({
+                    content: this.lang_t("rule.msg28"),
+                    l_text: this.lang_t("common.back"),
+                  }),
+                  !1
+                );
+              if ("add" == this.editState) {
+                if (this.data.length >= this.maxRule)
+                  return (
+                    Cstool.Mark({
+                      content: this.lang_t("rule.msg30", [this.maxRule]),
+                      l_text: this.lang_t("common.back"),
+                    }),
+                    !1
+                  );
+                e.addEffect = "0";
+              } else
+                (e.idx = String(this.tempIdx + 1)),
+                  (e.enable = "1"),
+                  (e.addEffect = "2");
+              (e.mac = this.mac),
+                (e.desc = this.name),
+                "1" == globalConfig.pageOptimize
+                  ? (e.state = this.status)
+                  : (e.state = "1");
+              var a = "";
+              if (this.selectall) a = "0";
+              else
+                for (var l in this.select) {
+                  var o = String(Number(l) + 1);
+                  this.select[l] && (a += "" == a ? o : ";" + o);
+                }
+              for (i = 0; i < this.data.length; i++)
+                if (
+                  this.mac.toUpperCase() == this.data[i].mac &&
+                  a == this.weekEdit[i] &&
+                  String(this.stime1) == this.editsHour[i] &&
+                  String(this.stime2) == this.editsMin[i] &&
+                  String(this.etime1) == this.editeHour[i] &&
+                  String(this.etime2) == this.editeMin[i]
+                )
+                  return (
+                    Cstool.Mark({
+                      content: this.lang_t("rule.time_conflict"),
+                      l_text: this.lang_t("common.back"),
+                    }),
+                    !1
+                  );
+              if ("" == a)
+                return (
+                  Cstool.Mark({
+                    content: this.lang_t("rule.msg41"),
+                    l_text: this.lang_t("common.back"),
+                  }),
+                  !1
+                );
+              (e.week = a),
+                (e.sTime = this.stime1 + ":" + this.stime2),
+                (e.eTime = this.etime1 + ":" + this.etime2);
+            }
+            (this.addbtn = !0),
+              uiPost.setParentalRules(e, function (t) {
+                (this.addbtn = !1),
+                  Cstool.Mark({
+                    type: "load",
+                    time: 2,
+                    content: this.lang_t("common.effective"),
+                    success: function () {
+                      Cstool.Flag({
+                        content: this.lang_t("common.set_success"),
+                        btnText: this.lang_t("common.back"),
+                        ok: function () {
+                          location.href = location.href;
+                        },
+                      });
+                    },
+                  });
+              });
+          },
+          deleteBtn: function () {
+            var t = {};
+            (t["delRule" + this.tempIdx] = String(this.tempIdx)),
+              Cstool.Mark({
+                content: this.lang_t("vpn.msg8"),
+                ok: function () {
+                  uiPost.delParentalRules(t, function (t) {
+                    var e = 2;
+                    t && t.wtime && "0" != t.wtime && (e = t.wtime),
+                      Cstool.Mark({
+                        type: "load",
+                        time: e,
+                        content: this.lang_t("common.deletion"),
+                        success: function () {
+                          location.href = location.href;
+                        },
+                      });
+                  });
+                },
+              });
+          },
+        },
+        filters: {
+          filling: function (t) {
+            for (var e = t, i = 0, s = 0; s < t.length; s++)
+              255 < t.charCodeAt(s) ? (i += 2) : (i += 1);
+            for (var n = i; n < 21; n++) e += "  ";
+            return e;
+          },
+        },
+      };
+    </script>
+    <script src="/static/js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="proma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no cache" />
+    <meta http-equiv="expires" content="0" />
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <link rel="stylesheet" href="/static/css/main.css" />
+    <link rel="stylesheet" href="/static/css/common.css" />
+    <link rel="stylesheet" href="/static/css/advance_menu.css" />
+    <style>
+      .label-type {
+        font-size: 10.998px;
+        font-weight: 700;
+        line-height: 14px;
+        color: #fff;
+        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+        white-space: nowrap;
+        vertical-align: baseline;
+        background-color: #999;
+        padding: 1px 4px 2px;
+        -webkit-border-radius: 3px;
+        -moz-border-radius: 3px;
+        border-radius: 3px;
+      }
+      .label-success {
+        background-color: #468847;
+      }
+      .lable-title {
+        color: #ea7105;
+        font-weight: 700;
+      }
+      input[type="text"]:disabled {
+        cursor: not-allowed;
+        background-color: #eee;
+        border-color: #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="text/x-template" id="main">
+      <div>
+        <!--子菜单-->
+        <adv-child-menu childType="network"></adv-child-menu>
+        <div class="advance-box">
+      	<x-help :text="lang_t('ipv6.help')"></x-help>
+          <br><br>
+      	<div class="fun-box">
+            <br>
+            <table class="table">
+              <tbody>
+              	<tr>
+      			  <td class="fun-left">{{lang_t('ipv6.connect_type')}}:</td>
+      			  <td>
+      				<select v-model="service" >
+      					<option value="off">{{lang_t('rule.off')}}</option>
+      					<option value="static">Native Static</option>
+      					<option value="dhcp6">Native DHCPv6</option>
+      					<option value="pppoe6" v-if="globalConfig.ipv6PPPSupport">PPPoE</option>
+      					<option value="6in4">Tunnel 6in4</option>
+      					<option value="6to4">Tunnel 6to4</option>
+      					<option value="6rd">Tunnel 6rd</option>
+      				</select>
+      			  </td>
+      		    </tr>
+      		    <tr v-show="service!='off'">
+      			  <td class="fun-left">{{lang_t('ipv6.wan_type')}}:</td>
+      			  <td>
+      				<span :class="['label-type', wan_type!=''?'label-success':'']">
+      					<span>IPoE: {{service == 'pppoe6' ? 'PPP' : lang_t('ipv6.dynamic_ip')}}</span>
+      				</span>
+      			  </td>
+      		    </tr>
+      		</tbody>
+      		<tbody v-if="service=='pppoe6'">
+      			<tr>
+      				<td class="fun-left"><span class="lable-title">PPPoE</span></td>
+      				<td></td>
+      			  </tr>
+      			<tr>
+      				<td class="fun-left">{{ lang_t('wan.user') }}</td>
+      				<td>
+      				  <input type="text" v-model="pppoe.User"  maxlength="32" v-verify="formRules" data-name="pppoeUser">
+      				</td>
+      			</tr>
+      			<tr>
+      				<td class="fun-left">{{ lang_t('wan.pass') }}</td>
+      				<td>
+      				  <input type="password" v-model="pppoe.Pass" v-pass  maxlength="32" v-verify="formRules" data-name="pppoePass">
+      				</td>
+      			</tr>
+      			<tr>
+      				<td class="fun-left">{{ lang_t('wan.server_name') }}</td>
+      				<td>
+      				  <input type="text" v-model="pppoe.ServiceName"  maxlength="32" :placeholder="lang_t('wan.optional')" v-verify="formRules" data-name="pppoeServiceName">
+      				</td>
+      			</tr>
+      			<tr>
+      				<td class="fun-left">MTU</td>
+      				<td>
+      				  <input type="text" v-model="pppoe.Mtu"  maxlength="4" v-verify="formRules" data-name="pppoeMtu">
+      				  &nbsp;&nbsp;
+      				  <small>({{ lang_t('wan.range') }}:576~1492)</small>
+      				</td>
+      			</tr>
+      			<tr>
+      				<td class="fun-left"></td>
+      				<td>
+      					<button style="background-color: green;color: #fff;padding: 2px 4px;" :disabled="linkBool" @click="linkDialFun('1')">{{lang_t('wan.connect')}}</button>
+      					|
+      					<button style="background-color: darkred;color: #fff;padding: 2px 4px;" :disabled="!linkBool" @click="linkDialFun('0')">{{lang_t('wan.disconnect')}}</button>
+      				</td>
+      			</tr>
+      		</tbody>
+      		<tbody v-if="(service=='6in4'||service=='6to4'||service=='6rd')&&service!='off'">
+      		    <tr>
+      			  <td class="fun-left"><span class="lable-title">{{lang_t('ipv6.sit_title')}} (SIT)</span></td>
+      			  <td></td>
+      		    </tr>
+      		    <tr v-if="service=='6in4'">
+      			  <td class="fun-left">{{lang_t('ipv6.remote')}}:</td>
+      			  <td>
+      				<input type="text" v-model="remote_6in4" v-verify="formRules" data-name="remote_6in">
+      			  </td>
+      		    </tr>
+      		    <tr v-if="service=='6to4'">
+      			  <td class="fun-left">{{lang_t('ipv6.relay_to')}} (IPv4):</td>
+      			  <td>
+      				<input type="text" v-model="relay_6to4" v-verify="formRules" data-name="relay_6to">
+      			  </td>
+      		    </tr>
+      		    <tr v-if="service=='6rd'">
+      			  <td class="fun-left">{{lang_t('ipv6.relay_rd')}} (IPv4):</td>
+      			  <td>
+      				<input type="text" :disabled="dhcp_6rd=='1'" v-model="relay_6rd" v-verify="formRules" data-name="relay_6rd">
+      			  </td>
+      		    </tr>
+      		    <tr v-if="service=='6rd'">
+      			  <td class="fun-left">{{lang_t('ipv6.rd_size')}}:</td>
+      			  <td>
+      				<input type="text" :disabled="dhcp_6rd=='1'" v-model="size_6rd" v-verify="formRules" data-name="size_6rd" style="width: 10%;" maxlength="2">
+      			  </td>
+      		    </tr>
+      		    <tr>
+      			  <td class="fun-left">{{lang_t('ipv6.sit')}}:</td>
+      			  <td>
+      				<input type="text" v-model="sit_mtu" v-verify="formRules" data-name="sit_mtu" style="width: 10%;" maxlength="4">
+      			  </td>
+      		    </tr>
+      		    <tr>
+      			  <td class="fun-left">{{lang_t('ipv6.sit_ttl')}}:</td>
+      			  <td>
+      				<input type="text" v-model="sit_ttl" v-verify="formRules" data-name="sit_ttl" style="width: 10%;" maxlength="3">
+      			  </td>
+      		    </tr>
+              </tbody>
+      		<tbody v-show="service!='off'">
+      		    <tr>
+      			  <td class="fun-left"><span class="lable-title">{{lang_t('ipv6.set')}}</span></td>
+      			  <td></td>
+      		    </tr>
+      		    <tr v-show="service=='static'||service=='6in4'">
+      			  <td class="fun-left">{{lang_t('ipv6.wan_addr')}}:</td>
+      			  <td>
+      			  	<x-ipv6-addr v-model="wan_addr"></x-ipv6-addr>
+      			  </td>
+      		    </tr>
+      		    <tr v-if="service=='static'||service=='6in4'">
+      			  <td class="fun-left">{{lang_t('ipv6.wan_size')}}:</td>
+      			  <td>
+      				<input type="text" v-model="wan_size" maxlength="3" v-verify="formRules" data-name="wan_size" style="width: 10%;">
+      			  </td>
+      		    </tr>
+      		    <tr v-show="service=='static'||service=='6in4'">
+      			  <td class="fun-left">{{lang_t('ipv6.wan_gw')}}:</td>
+      			  <td>
+      			  	<x-ipv6-addr v-model="wan_gate"></x-ipv6-addr>
+      			  </td>
+      		    </tr>
+      		    <tr v-show="dhcpSupport">
+      			  <td class="fun-left">{{lang_t('ipv6.get_wan')}}:</td>
+      			  <td>
+      				<select v-model="wan_dhcp">
+      					<option value="0">Stateless: RA</option>
+      					<option value="1">Stateful: DHCPv6 IA-NA</option>
+      					<option value="2">{{lang_t('ipv6.two')}}</option>
+      				</select>
+      			  </td>
+      		    </tr>
+      		    <tr v-show="dhcpSupport && wan_dhcp!='1'">
+      			  <td class="fun-left">{{lang_t('ipv6.priv')}} (RFC 4941)</td>
+      			  <td>
+      				<select v-model="wan_priv">
+      					<option value="0">{{lang_t('common.no')}} (*)</option>
+      					<option value="1">{{lang_t('common.yes')}}</option>
+      				</select>
+      			  </td>
+      		    </tr>
+      		    <tr v-show="service=='6rd'">
+      			  <td class="fun-left">{{lang_t('ipv6.get_rd')}}:</td>
+      			  <td>
+      				<select v-model="dhcp_6rd">
+      					<option value="0">{{lang_t('common.no')}}</option>
+      					<option value="1">{{lang_t('common.yes')}}</option>
+      				</select>
+      			  </td>
+      		    </tr>
+      		    <tr v-show="service=='6rd'&&dhcp_6rd=='0'">
+      			  <td class="fun-left">6RD IPv6 {{lang_t('ipv6.per_size')}}:</td>
+      			  <td>
+      				<x-ipv6-addr v-model="wan_addr"></x-ipv6-addr>
+      			  </td>
+      		    </tr>
+      		    <tr v-if="service=='6rd'&&dhcp_6rd=='0'">
+      			  <td class="fun-left">6RD {{lang_t('ipv6.per_len')}}:</td>
+      			  <td>
+      				<input type="text" v-model="wan_size" maxlength="3" v-verify="formRules" data-name="wan_size" style="width: 10%;">
+      			  </td>
+      		    </tr>
+              </tbody>
+              <tbody v-show="service!='off'">
+              	<tr>
+      			  <td class="fun-left"><span class="lable-title">{{lang_t('ipv6.dns_wan')}}</span></td>
+      			  <td></td>
+      		    </tr>
+      		    <tr v-show="dhcpSupport">
+      			  <td class="fun-left">{{lang_t('wan.auto_dns')}}:</td>
+      			  <td>
+      				<x-switch v-model="dns_auto_fake"></x-switch>
+      			  </td>
+      		    </tr>
+      		    <tr v-show="!dns_auto_fake || !dhcpSupport">
+      			  <td class="fun-left">{{lang_t('ipv6.server')}} 1:</td>
+      			  <td>
+      			  	<x-ipv6-addr v-model="dns1"></x-ipv6-addr>
+      			  </td>
+      		    </tr>
+      		    <tr v-show="!dns_auto_fake || !dhcpSupport">
+      			  <td class="fun-left">{{lang_t('ipv6.server')}} 2:</td>
+      			  <td>
+      				<x-ipv6-addr v-model="dns2"></x-ipv6-addr>
+      			  </td>
+      		    </tr>
+      		    <tr v-show="!dns_auto_fake || !dhcpSupport">
+      			  <td class="fun-left">{{lang_t('ipv6.server')}} 3:</td>
+      			  <td>
+      				<x-ipv6-addr v-model="dns3"></x-ipv6-addr>
+      			  </td>
+      		    </tr>
+              </tbody>
+              <tbody v-show="service!='off'">
+              	<tr>
+      			  <td class="fun-left"><span class="lable-title">{{lang_t('ipv6.lan_set')}}</span></td>
+      			  <td></td>
+      		    </tr>
+      		    <tr v-show="dhcpSupport">
+      			  <td class="fun-left">{{lang_t('ipv6.get_lan')}}:</td>
+      			  <td>
+      				<x-switch v-model="lan_auto_fake"></x-switch>
+      			  </td>
+      		    </tr>
+      		    <tr v-show="service!='6to4'&&service!='6rd'&&(!lan_auto_fake||!dhcpSupport)">
+      			  <td class="fun-left">{{lang_t('ipv6.lan_addr')}}:</td>
+      			  <td>
+      			  	<x-ipv6-addr v-model="lan_addr"></x-ipv6-addr>
+      			  </td>
+      		    </tr>
+      		    <tr v-if="service!='6to4'&&service!='6rd'&&(!lan_auto_fake||!dhcpSupport)">
+      			  <td class="fun-left">{{lang_t('ipv6.lan_per_len')}}:</td>
+      			  <td>
+      				<input type="text" v-model="lan_size" maxlength="2" v-verify="formRules" data-name="lan_size" style="width: 10%;">
+      			  </td>
+      		    </tr>
+      		    <tr>
+      			  <td class="fun-left">{{lang_t('ipv6.radv')}}:</td>
+      			  <td>
+      				<x-switch v-model="lan_radv_fake"></x-switch>
+      			  </td>
+      		    </tr>
+      		    <tr v-show="lan_radv_fake">
+      			  <td class="fun-left">{{lang_t('ipv6.lan_dhcp')}}:</td>
+      			  <td>
+      				<select v-model="lan_dhcp">
+      					<option value="0">{{lang_t('common.no')}}</option>
+      					<option value="1">Stateless (*)</option>
+      					<option value="2">Stateful</option>
+      					<option value="3">Stateless & Stateful</option>
+      				</select>
+      			  </td>
+      		    </tr>
+      		    <tr v-if="lan_radv_fake&&(lan_dhcp=='2'||lan_dhcp=='3')">
+      			  <td class="fun-left">{{lang_t('ipv6.lan_bool')}}:</td>
+      			  <td>
+      				<input type="text" style="width: 10%;" class="text3" maxlength="4" v-model="lan_sfps_fake1">-<input type="text" style="width: 10%;" class="text3" maxlength="4" v-model="lan_sfps_fake2">
+      			  </td>
+      		    </tr>
+      		    <tr v-show="lan_radv_fake&&(lan_dhcp=='2'||lan_dhcp=='3')">
+      			  <td class="fun-left">{{lang_t('ipv6.lease')}}:</td>
+      			  <td>
+      				<input type="text" v-model="lan_sflt" maxlength="6" v-verify="formRules" data-name="lan_sflt">
+      				<small>[120..604800]</small>
+      			  </td>
+      		    </tr>
+              </tbody>
+      		<tbody>
+      		<tr><td colspan="2"></td></tr>
+      		<tr>
+      		  <td class="fun-left"></td>
+      		  <td>
+      			<button type="button" class="btn" @click="submitData">{{ lang_t('common.apply') }}</button>
+      		  </td>
+      	    </tr>
+      		</tbody>
+      	  </table>
+          </div>
+        </div>
+      </div>
+    </script>
+    <script src="/plugin/vue.js"></script>
+    <script src="/plugin/jquery-3.2.1.min.js"></script>
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/layout.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/topicurl.js"></script>
+    <script>
+      var cs_main = {
+        template: "#main",
+        data: function () {
+          return {
+            lang_t: lang_t,
+            service: "off",
+            remote_6in4: "",
+            relay_6to4: "",
+            relay_6rd: "",
+            size_6rd: "",
+            sit_mtu: "",
+            sit_ttl: "",
+            wan_addr: [],
+            wan_size: "64",
+            wan_gate: [],
+            wan_dhcp: "0",
+            wan_priv: "0",
+            dhcp_6rd: "0",
+            dns_auto_fake: !1,
+            dns1: [],
+            dns2: [],
+            dns3: [],
+            lan_auto_fake: !1,
+            lan_addr: [],
+            lan_size: "48",
+            lan_radv_fake: !1,
+            lan_dhcp: "0",
+            wan_type: "",
+            lan_sflt: "1800",
+            lan_sfps_fake1: "",
+            lan_sfps_fake2: "",
+            pppoe: { User: "", Pass: "", ServiceName: "", Mtu: "" },
+            linkBool: !1,
+          };
+        },
+        computed: {
+          dhcpSupport: function () {
+            return "dhcp6" == this.service || "pppoe6" == this.service;
+          },
+          formRules: function () {
+            var t = this;
+            return {
+              remote_6in: function (n, a) {
+                if ("6in4" == t.service) {
+                  var e = cs.ip(n);
+                  1 == e
+                    ? a(t.lang_t("wan.msg20"))
+                    : 2 == e || 3 == e || 4 == e
+                    ? a(t.lang_t("wan.msg20"))
+                    : a();
+                }
+              },
+              relay_6to: function (n, a) {
+                if ("6to4" == t.service) {
+                  var e = cs.ip(n);
+                  1 == e
+                    ? a(t.lang_t("wan.msg20"))
+                    : 2 == e || 3 == e || 4 == e
+                    ? a(t.lang_t("wan.msg20"))
+                    : a();
+                }
+              },
+              relay_6rd: function (n, a) {
+                if ("6rd" == t.service) {
+                  var e = cs.ip(n);
+                  1 == e
+                    ? a(t.lang_t("wan.msg20"))
+                    : 2 == e || 3 == e || 4 == e
+                    ? a(t.lang_t("wan.msg20"))
+                    : a();
+                }
+              },
+              wan_size: function (n, a) {
+                99 != cs.num_range(n, 1, 128)
+                  ? a(t.lang_t("rule.msg56", [1, 128]))
+                  : a();
+              },
+              lan_size: function (n, a) {
+                ((t.dhcpSupport && !t.lan_auto_fake) ||
+                  "static" == t.service ||
+                  "6in4" == t.service) &&
+                  (99 != cs.num_range(n, 48, 64)
+                    ? a(t.lang_t("rule.msg56", [48, 64]))
+                    : a());
+              },
+              sit_mtu: function (n, a) {
+                99 != cs.num_range(n, 1280, 1480)
+                  ? a(t.lang_t("rule.msg56", [1280, 1480]))
+                  : a();
+              },
+              sit_ttl: function (n, a) {
+                99 != cs.num_range(n, 1, 255)
+                  ? a(t.lang_t("rule.msg56", [1, 255]))
+                  : a();
+              },
+              size_6rd: function (n, a) {
+                99 != cs.num_range(n, 0, 32)
+                  ? a(t.lang_t("rule.msg56", [0, 32]))
+                  : a();
+              },
+              lan_sflt: function (n, a) {
+                var e = cs.num_range(n, 120, 604800);
+                !t.lan_radv_fake ||
+                  ("2" != t.lan_dhcp && "3" != t.lan_dhcp) ||
+                  (99 != e ? a(t.lang_t("rule.msg56", [120, 604800])) : a());
+              },
+              pppoeUser: function (n, a) {
+                0 == cs.string(n, "dun")
+                  ? a(t.lang_t("wan.user") + t.lang_t("wan.msg1"))
+                  : a();
+              },
+              pppoePass: function (n, a) {
+                var e = cs.string(n, "dun");
+                0 == e
+                  ? a(t.lang_t("wan.pass") + t.lang_t("wan.msg1"))
+                  : 1 == e
+                  ? a(t.lang_t("wan.pass") + t.lang_t("wan.msg22"))
+                  : a();
+              },
+              pppoeServiceName: function (n, a) {
+                1 == cs.string(n)
+                  ? a(t.lang_t("wan.server_name") + t.lang_t("wan.msg22"))
+                  : a();
+              },
+              pppoeMtu: function (n, a) {
+                var e = cs.num_range(n, 576, 1492);
+                0 == e
+                  ? a("MTU " + t.lang_t("wan.msg1"))
+                  : 1 == e
+                  ? a("MTU " + t.lang_t("rule.msg24"))
+                  : 2 == e
+                  ? a(t.lang_t("wan.msg10", [576, 1492]))
+                  : a();
+              },
+            };
+          },
+        },
+        created: function () {
+          var e = this;
+          uiPost.getIpv6Cfg(function (n) {
+            for (var a in ((e.service = n.service),
+            (e.remote_6in4 = n.remote6in4),
+            (e.relay_6to4 = n.relay6to4),
+            (e.relay_6rd = n.relay6rd),
+            (e.size_6rd = n.size6rd),
+            (e.sit_mtu = n.sitMtu),
+            (e.sit_ttl = n.sitTtl),
+            (e.wan_addr = e.ipv6ToValue(n.wanAddr)),
+            (e.wan_size = n.wanSize),
+            (e.wan_gate = e.ipv6ToValue(n.wanGate)),
+            (e.wan_dhcp = n.wanDhcp),
+            (e.wan_priv = n.wanPriv),
+            (e.dhcp_6rd = n.dhcp6rd),
+            (e.dns_auto_fake = "1" == n.dnsAutoFake),
+            (e.dns1 = e.ipv6ToValue(n.dns1)),
+            (e.dns2 = e.ipv6ToValue(n.dns2)),
+            (e.dns3 = e.ipv6ToValue(n.dns3)),
+            (e.lan_auto_fake = "1" == n.lanAutoFake),
+            (e.lan_addr = e.ipv6ToValue(n.lanAddr)),
+            (e.lan_size = n.lanSize),
+            (e.lan_radv_fake = "1" == n.lanRadvFake),
+            (e.lan_dhcp = n.lanDhcp),
+            (e.wan_type = n.wanType),
+            (e.lan_sfps_fake1 = n.lanSfpsFake1),
+            (e.lan_sfps_fake2 = n.lanSfpsFake2),
+            (e.lan_sflt = n.lanSflt),
+            e.pppoe))
+              n["pppoe" + a] && (e.pppoe[a] = n["pppoe" + a]);
+            e.linkBool = "connected" == n.wanConnStatus;
+          });
+        },
+        methods: {
+          ipv6ToValue: function (n) {
+            return "object" != typeof n
+              ? n.split(":")
+              : (":::::::" == (n = n.join(":")) && (n = ""), n);
+          },
+          submitData: function () {
+            var _ = this,
+              o = {};
+            Cstool.Verify(this.formRules, function (n) {
+              if (n || "off" == _.service) {
+                if ("off" != _.service) {
+                  if (
+                    ("6rd" == _.service && "0" == _.dhcp_6rd) ||
+                    "static" == _.service ||
+                    "6in4" == _.service
+                  ) {
+                    var a = _.ipv6ToValue(_.wan_addr);
+                    if (!_.verifyFun(a, "wan_addr")) return;
+                    if (
+                      ((o.wanAddr = a),
+                      (o.wanSize = _.wan_size),
+                      "6rd" != _.service)
+                    ) {
+                      var e = _.ipv6ToValue(_.wan_gate);
+                      if (!_.verifyFun(e, "wan_gw")) return;
+                      o.wanGate = e;
+                    }
+                  }
+                  if ((_.dhcpSupport && !_.dns_auto_fake) || !_.dhcpSupport) {
+                    var t = _.ipv6ToValue(_.dns1),
+                      i = _.ipv6ToValue(_.dns2),
+                      r = _.ipv6ToValue(_.dns3);
+                    if ("" != t && !_.verifyFun(t, "server", "1")) return;
+                    if ("" != i && !_.verifyFun(i, "server", "2")) return;
+                    if ("" != r && !_.verifyFun(r, "server", "3")) return;
+                    (o.dns1 = _.ipv6ToValue(_.dns1)),
+                      (o.dns2 = _.ipv6ToValue(_.dns2)),
+                      (o.dns3 = _.ipv6ToValue(_.dns3));
+                  }
+                  if (
+                    (_.dhcpSupport && !_.lan_auto_fake) ||
+                    "static" == _.service ||
+                    "6in4" == _.service
+                  ) {
+                    var s = _.ipv6ToValue(_.lan_addr);
+                    if (!_.verifyFun(s, "lan_addr")) return;
+                    (o.lanAddr = s), (o.lanSize = _.lan_size);
+                  }
+                  if (
+                    (_.dhcpSupport &&
+                      ((o.dnsAutoFake = _.dns_auto_fake ? "1" : "0"),
+                      (o.lanAutoFake = _.lan_auto_fake ? "1" : "0"),
+                      (o.wanDhcp = _.wan_dhcp),
+                      "1" != _.wan_dhcp && (o.wanPriv = _.wan_priv)),
+                    "6rd" == _.service && (o.dhcp6rd = _.dhcp_6rd),
+                    (o.lanRadvFake = _.lan_radv_fake ? "1" : "0"),
+                    _.lan_radv_fake &&
+                      ((o.lanDhcp = _.lan_dhcp),
+                      "2" == _.lan_dhcp || "3" == _.lan_dhcp))
+                  ) {
+                    if (!_.verifyFun(_.lan_sfps_fake1, "lan_bool")) return;
+                    if (!_.verifyFun(_.lan_sfps_fake2, "lan_bool")) return;
+                    (o.lanSfpsFake1 = _.lan_sfps_fake1),
+                      (o.lanSfpsFake2 = _.lan_sfps_fake2),
+                      (o.lanSflt = _.lan_sflt);
+                  }
+                  if (
+                    (_.dhcpSupport ||
+                      "static" == _.service ||
+                      ("6in4" == _.service && (o.remote6in4 = _.remote_6in4),
+                      "6to4" == _.service && (o.relay6to4 = _.relay_6to4),
+                      "6rd" == _.service &&
+                        ((o.relay6rd = _.relay_6rd), (o.size6rd = _.size_6rd)),
+                      (o.sitMtu = _.sit_mtu),
+                      (o.sitTtl = _.sit_ttl)),
+                    "pppoe6" == _.service)
+                  )
+                    for (var l in _.pppoe) o["pppoe" + l] = _.pppoe[l];
+                }
+                (o.service = _.service),
+                  uiPost.setIpv6Cfg(o, function () {
+                    Cstool.Count(30, "js", function () {
+                      location.href = location.href;
+                    });
+                  });
+              }
+            });
+          },
+          linkDialFun: function (n) {
+            uiPost.setManualDialCfg({ dialStatus: n }, function (n) {
+              var a = 5;
+              n && n.wtime && (a = n.wtime),
+                Cstool.Count(a, "js", function () {
+                  location.href = location.href;
+                });
+            });
+          },
+          verifyFun: function (n, a, e) {
+            return (
+              null == e && (e = ""),
+              0 !=
+                (-1 < n.indexOf(":") ? cs.isIpv6(n) : checkIpv6DigitRange(n)) ||
+                (Cstool.Msg({
+                  content:
+                    this.lang_t("ipv6." + a) + e + this.lang_t("ipv6.msg2"),
+                }),
+                !1)
+            );
+          },
+        },
+      };
+    </script>
+    <script src="/static/js/main.js"></script>
+  </body>
+</html>

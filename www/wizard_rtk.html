@@ -1,0 +1,2126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="proma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no cache" />
+    <meta http-equiv="expires" content="0" />
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <link rel="stylesheet" href="/static/css/main.css" />
+    <link rel="stylesheet" href="/static/css/common.css" />
+    <link rel="stylesheet" href="/static/css/wizard.css" />
+    <link rel="stylesheet" href="/static/css/loading.css" />
+    <style>
+      .done-wifi-layout {
+        display: flex;
+      }
+      .done-wifi-layout .layout {
+        float: left;
+        border: 1px solid #b1b1b1;
+        padding: 12px;
+        width: 260px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        word-break: break-all;
+        overflow: hidden;
+      }
+      .done-wifi-layout .row {
+        width: 100%;
+        display: block;
+        clear: both;
+        word-wrap: break-word;
+        white-space: normal;
+        margin-bottom: 6px;
+      }
+      .done-wifi-layout .col1 {
+        width: 55%;
+        float: left;
+        min-height: 45px;
+      }
+      .done-wifi-layout .col2 {
+        width: 45%;
+        float: left;
+        min-height: 45px;
+      }
+      .t_box_a {
+        position: absolute;
+        top: 14px;
+        left: 232px;
+      }
+      .table tr {
+        text-align: left;
+      }
+      .btn_auto {
+        padding: 0 10px;
+        height: 28px;
+        color: #fff;
+        font-size: 14px;
+        border: 0;
+        cursor: pointer;
+        outline: 0;
+        background: #2ea8dc;
+      }
+      .nowrap {
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="text/x-template" id="main">
+      <div ref="content_box" style="overflow-x:auto;">
+        <div class="wizard-box">
+        	<div v-html="menuSelect"></div>
+          <div v-show="menuStep==0">
+            <table>
+              <tr><td colspan="2">&nbsp;</td></tr>
+              <tr>
+                <td><table class="table">
+                  <tbody>
+                  <tr>
+                    <td>{{ lang_t('time.time_zone') }}</td>
+                    <td>
+                      <select v-model="tz" class="long-select">
+      				 <option value="UTC+12">(UTC-12:00) {{ lang_t('time.ntp25') }}</option>
+      				 <option value="UTC+11">(UTC-11:00) {{ lang_t('time.ntp1') }}</option>
+      				 <option value="UTC+10">(UTC-10:00) {{ lang_t('time.ntp2') }}</option>
+      				 <option value="UTC+9">(UTC-09:00) {{ lang_t('time.ntp3') }}</option>
+      				 <option value="UTC+8">(UTC-08:00) {{ lang_t('time.ntp4') }}</option>
+      				 <option value="UTC+7">(UTC-07:00) {{ lang_t('time.ntp5') }}</option>
+      				 <option value="UTC+6">(UTC-06:00) {{ lang_t('time.ntp6') }}</option>
+      				 <option value="UTC+5">(UTC-05:00) {{ lang_t('time.ntp7') }}</option>
+      				 <option value="UTC+4">(UTC-04:00) {{ lang_t('time.ntp8') }}</option>
+      				 <option value="UTC+3">(UTC-03:00) {{ lang_t('time.ntp9') }}</option>
+      				 <option value="UTC+2">(UTC-02:00) {{ lang_t('time.ntp10') }}</option>
+      				 <option value="UTC+1">(UTC-01:00) {{ lang_t('time.ntp11') }}</option>
+      				 <option value="UTC+0">(UTC-00:00) {{ lang_t('time.ntp12') }}</option>
+      				 <option value="UTC-1">(UTC+01:00) {{ lang_t('time.ntp13') }}</option>
+      				 <option value="UTC-2">(UTC+02:00) {{ lang_t('time.ntp14') }}</option>
+      				 <option value="UTC-3">(UTC+03:00) {{ lang_t('time.ntp15') }}</option>
+      				 <option value="UTC-4">(UTC+04:00) {{ lang_t('time.ntp16') }}</option>
+      				 <option value="UTC-5">(UTC+05:00) {{ lang_t('time.ntp17') }}</option>
+      				 <option value="UTC-6">(UTC+06:00) {{ lang_t('time.ntp18') }}</option>
+      				 <option value="UTC-7">(UTC+07:00) {{ lang_t('time.ntp19') + (globalConfig.softwareType == 'Indonesia' ? lang_t('time.ntp_india') : '') }}</option>
+      				 <option value="UTC-8">(UTC+08:00) {{ lang_t('time.ntp20') }}</option>
+      				 <option value="UTC-9">(UTC+09:00) {{ lang_t('time.ntp21') }}</option>
+      				 <option value="UTC-10">(UTC+10:00) {{ lang_t('time.ntp22') }}</option>
+      				 <option value="UTC-11">(UTC+11:00) {{ lang_t('time.ntp23') }}</option>
+      				 <option value="UTC-12">(UTC+12:00) {{ lang_t('time.ntp24') }}</option>
+      		   	 	</select>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table></td>
+              </tr>
+              <tr><td colspan="2" height="20"></td></tr>
+              <tr>
+                <td colspan="2" align="center">
+                  <button type="button" class="btn" @click="exit">{{ lang_t('common.exit') }}</button>
+                  &nbsp;&nbsp;
+                  <button type="button" class="btn" @click="next(1)">{{ lang_t('common.next') }}</button>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+      	<div v-show="menuStep==1">
+            <table>
+            	<tr><td colspan="2">&nbsp;</td></tr>
+              <tr>
+                <td valign="top" :width="strategy != '1' ? 180 : 0" :style="{'padding-top': paddingValue}"><table class="table t_table1" v-show="strategy != '1'">
+      		    <tbody>
+      		  	<tr v-if="globalConfig.wanTypeList_DHCP">
+      			  <td align="left">
+      				<x-radio v-model="mian_proto" :name="[lang_t('wan.dynamic_ip')]" :c_value="['1']"></x-radio>
+      			  </td>
+      		  	</tr>
+      		  	<tr v-if="globalConfig.wanTypeList_STATIC">
+      			  <td align="left">
+      			  	<x-radio v-model="mian_proto" :name="[lang_t('wan.static_ip')]" :c_value="['0']"></x-radio>
+      			  </td>
+      		  	</tr>
+      		  	<tr v-if="globalConfig.wanTypeList_PPPOE">
+      			  <td align="left">
+      			  	<x-radio v-model="mian_proto" :name="[lang_t('wan.pppoe')]" :c_value="['3']"></x-radio>
+      			  </td>
+      		  	</tr>
+      		  	<tr v-if="globalConfig.wanTypeList_PPTP">
+      			  <td align="left">
+      			  	<x-radio v-model="mian_proto" :name="['PPTP']" :c_value="['4']"></x-radio>
+      			  </td>
+      		  	</tr>
+      		  	<tr v-if="globalConfig.wanTypeList_L2TP">
+      			  <td align="left">
+      			  	<x-radio v-model="mian_proto" :name="['L2TP']" :c_value="['6']"></x-radio>
+      			  </td>
+      		  	</tr>
+      		  	</tbody>
+                </table></td>
+                <td valign="top">
+                	<table class="table">
+      			  <tbody v-if="globalConfig.modelType == '4g'">
+      				<tr>
+      				  <td>
+      				  	<div class="nowrap">{{lang_t('wan.strategy')}}</div>
+      				  </td>
+      				  <td>
+      					<x-radio v-model="strategy" :name="['4G',lang_t('wan.wired')]" :c_value="['1','2']" @change="paddingAuto" pos="col"></x-radio>
+      				  </td>
+      				</tr>
+      				<tr v-show="">
+      				  <td >{{ lang_t('wan.detect_addr') }}</td>
+      				  <td>
+      					<input type="text" v-model="domain_ip" v-verify="wanRules" data-name="domain_ip">
+      				  </td>
+      				</tr>
+      				<tr v-show="strategy == '0'">
+      				  <td colspan="2"><b style="color:#EA7105;font-weight:bold;">{{ lang_t('wan.wiredset') }}</b></td>
+      				</tr>
+      			  </tbody>
+      	          <tbody v-show="strategy != '1' && mian_proto == 3">
+      				<tr><td colspan="2">{{ lang_t('wizard.ppp_info') }}</td></tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.user') }}</td>
+      				  <td>
+      					<input type="text" v-model="pppoeUser" maxlength="32" v-verify="wanRules" data-name="pppoeUser">
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.pass') }}</td>
+      				  <td>
+      					<input type="password" class="input input-err" v-model="pppoePass" maxlength="32" v-pass v-verify="wanRules" data-name="pppoePass">
+      				  </td>
+      				</tr>
+      				<tr v-show="globalConfig.pppoeRussiaSupport">
+      				  <td>{{ lang_t('wan.server_name') }}</td>
+      				  <td>
+      					<input type="text" v-model="pppoeServiceName" v-verify="wanRules" data-name="pppoeServiceName" maxlength="32">
+      				  </td>
+      				</tr>
+      				<tr v-show="globalConfig.pppoeRussiaSupport">
+      				  <td>{{ lang_t('wan.ac_name') }}</td>
+      				  <td>
+      					<input type="text" v-model="pppoeAcName" v-verify="wanRules" data-name="pppoeAcName" maxlength="32">
+      				  </td>
+      				</tr>
+      			    <!-- <input type="hidden" v-model="pppoeMtu" > -->
+      			  </tbody>
+      			  <tbody v-show="strategy != '1' && mian_proto == 4">
+      				<tr><td colspan="2">{{ lang_t('wizard.ppp_info') }}</td></tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.address_mode') }}</td>
+      				  <td>
+      				    <x-radio v-model="pptpMode" :name="vpnModeName" pos="col"></x-radio>
+      				  </td>
+      				</tr>
+      				<tr v-if="pptpMode == 1">
+      				  <td>{{ lang_t('wan.ip') }}</td>
+      				  <td>
+      					<input type="text" v-model="pptpIp" maxlength="15" v-verify="wanRules" data-name="pptpIp">
+      				  </td>
+      				</tr>
+      				<tr v-if="pptpMode == 1">
+      				  <td>{{ lang_t('wan.mask') }}</td>
+      				  <td>
+      					<input type="text" v-model="pptpMask" maxlength="15" v-verify="wanRules" data-name="pptpMask">
+      				  </td>
+      				</tr>
+      				<tr v-if="pptpMode == 1">
+      				  <td>{{ lang_t('wan.gateway') }}</td>
+      				  <td>
+      					<input type="text" v-model="pptpGw" maxlength="15" v-verify="wanRules" data-name="pptpGw">
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.server_address') }}</td>
+      				  <td>
+      					<input type="text" v-model="pptpServer" maxlength="32" v-verify="wanRules" data-name="pptpServer">
+      					&nbsp;&nbsp;
+      					<small>({{ lang_t('wan.ip_domain') }})</small>
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.user') }}</td>
+      				  <td>
+      					<input type="text" v-model="pptpUser" maxlength="32" v-verify="wanRules" data-name="pptpUser">
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.pass') }}</td>
+      				  <td>
+      					<input type="password" v-model="pptpPass" maxlength="32" v-verify="wanRules" data-name="pptpPass" v-pass>
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td></td>
+      				  <td>
+      					<x-checkbox v-model="pptpMppe" :k_style="{'margin-right':'3.5rem'}" k_class="c-checkbox-k">MPPE</x-checkbox>
+      					<x-checkbox v-model="pptpMppc" k_class="c-checkbox-k">MPPC</x-checkbox>
+      				  </td>
+      				</tr>
+      				<!-- <input type="hidden" v-model="pptpMtu"> -->
+      			  </tbody>
+      	          <tbody v-show="strategy != '1' && mian_proto == 6">
+      				<tr><td colspan="2">{{ lang_t('wizard.ppp_info') }}</td></tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.address_mode') }}</td>
+      				  <td>
+      				  	<x-radio v-model="l2tpMode" :name="vpnModeName" pos="col"></x-radio>
+      				  </td>
+      				</tr>
+      				<tr v-if="l2tpMode == 1">
+      				  <td>{{ lang_t('wan.ip') }}</td>
+      				  <td>
+      					<input type="text" v-model="l2tpIp" maxlength="15" v-verify="wanRules" data-name="l2tpIp">
+      				  </td>
+      				</tr>
+      				<tr v-if="l2tpMode == 1">
+      				  <td>{{ lang_t('wan.mask') }}</td>
+      				  <td>
+      					<input type="text" v-model="l2tpMask" maxlength="15" v-verify="wanRules" data-name="l2tpMask">
+      				  </td>
+      				</tr>
+      				<tr v-if="l2tpMode == 1">
+      				  <td>{{ lang_t('wan.gateway') }}</td>
+      				  <td>
+      					<input type="text" v-model="l2tpGw" maxlength="15" v-verify="wanRules" data-name="l2tpGw">
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.server_address') }}</td>
+      				  <td>
+      					<input type="text" v-model="l2tpServer" maxlength="32" v-verify="wanRules" data-name="l2tpServer">
+      					&nbsp;&nbsp;
+      					<small>({{ lang_t('wan.ip_domain') }})</small>
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.user') }}</td>
+      				  <td>
+      					<input type="text" v-model="l2tpUser" maxlength="32" v-verify="wanRules" data-name="l2tpUser">
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.pass') }}</td>
+      				  <td>
+      					<input type="password" v-model="l2tpPass" maxlength="32" v-verify="wanRules" data-name="l2tpPass" v-pass>
+      				  </td>
+      				</tr>
+      				<!-- <input type="hidden" v-model="l2tpMtu" > -->
+      			  </tbody>
+      	          <tbody v-show="strategy != '1' && mian_proto == 0">
+      				<tr><td colspan="2">{{ lang_t('wizard.static_info') }}</td></tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.ip') }}</td>
+      				  <td>
+      					<input type="text" v-model="staticIp" maxlength="15" v-verify="wanRules" data-name="staticIp">
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.mask') }}</td>
+      				  <td>
+      					<input type="text" v-model="staticMask" maxlength="15" v-verify="wanRules" data-name="staticMask">
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.gateway') }}</td>
+      				  <td>
+      					<input type="text" v-model="staticGw" maxlength="15" v-verify="wanRules" data-name="staticGw">
+      				  </td>
+      				</tr>
+      				<!-- <input type="hidden" v-model="staticMtu">
+      				<input type="hidden" v-model="dhcpMtu"> -->
+      		  	  </tbody>
+                    <tbody v-show="strategy != '1' && mian_proto == '1'"></tbody>
+                    <tbody v-show="strategy != '1' && (mian_proto == '0'|| (mian_proto == '4'&&pptpMode =='1')||(mian_proto == '6'&& l2tpMode =='1'))">
+              		<tr v-show="">
+      				  <td>{{ lang_t('wan.dns_set') }}</td>
+      				  <td>
+      					<select v-model="dnsMode" :disabled="dnsAbled">
+      					  <option value="0">{{ lang_t('wan.auto_dns') }}</option>
+      					  <option value="1">{{ lang_t('wan.manual_dns') }}</option>
+      					  <option value="2" v-if="globalConfig.modelType != '4g'">{{ lang_t('wan.dns_penetrate') }}</option>
+      					</select>
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.pri_dns') }}</td>
+      				  <td>
+      					<input type="text" v-model="m_priDns" maxlength="15" v-verify="wanRules" data-name="priDns">
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.sec_dns') }}</td>
+      				  <td>
+      					<input type="text" v-model="m_secDns" maxlength="15" v-verify="wanRules" data-name="secDns">
+      					&nbsp;&nbsp;
+      					<small>({{ lang_t('wan.optional') }})</small>
+      				  </td>
+      				</tr>
+                    </tbody>
+      	          <tbody v-show="strategy != '1'">
+      				<tr><td colspan="2">{{ lang_t('wizard.isp_info') }}</td></tr>
+      				<tr>
+      				  <td colspan="2" align="left">
+      					<x-radio v-model="clone" :name="cloneName" @change="clone_change"></x-radio>
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.mac') }}</td>
+      				  <td>
+      					<input type="text" v-model="cloneMac" id="clonemac_pass" maxlength="17" :disabled="macDisabled" v-verify="wanRules" data-name="cloneMac">
+      				  </td>
+      				</tr>
+      		      </tbody>
+      			  <tbody v-show="strategy=='1' || strategy=='0'">
+      				<tr v-show="strategy == '0'">
+      				  <td colspan="2"><b style="color: #EA7105;font-weight:bold;">{{ lang_t('wan.4gset') }}</b></td>
+      				</tr>
+      				<tr>
+      				  <td >{{ lang_t('wan.ip') }}</td>
+      				  <td><input type="text" :value="ip4g" disabled></td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.module_type') }}</td>
+      				  <td><input type="text" :value="moduleType" disabled></td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.4gmode') }}</td>
+      				  <td>
+      					<select v-model="lteCfg.mode4g" :key="lang_t('wan.auto')">
+      					  <option value="0">{{ lang_t('wan.auto') }}</option>
+      					  <option value="1">{{ lang_t('wan.manual') }}</option>
+      					</select>
+      				  </td>
+      				</tr>
+      	          </tbody>
+      	          <tbody v-show="(strategy=='1' || strategy=='0') && lteCfg.mode4g=='1'">
+      				<tr>
+      				  <td>APN</td>
+      				  <td>
+      					<input type="text" v-model="lteCfg.apn" :placeholder="lang_t('wan.msg23')">
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.dial_num') }}</td>
+      				  <td>
+      					<input type="text" v-model="lteCfg.dialNum">
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.validation') }}</td>
+      				  <td>
+      					<select v-model="lteCfg.validation">
+      					  <option value="0">NONE</option>
+      					  <option value="1">PAP</option>
+      					  <option value="2">CHAP</option>
+      					  <option value="3">CHAPv2</option>
+      					</select>
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.user') }}</td>
+      				  <td>
+      					<input type="text" v-model="lteCfg.user4g" :placeholder="lang_t('wan.msg23')">
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.pass') }}</td>
+      				  <td>
+      					<input type="text" v-model="lteCfg.pass4g" :placeholder="lang_t('wan.msg23')">
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td>{{ lang_t('wan.pin_code') }}</td>
+      				  <td>
+      					<input type="text" v-model="lteCfg.pinCode" :placeholder="lang_t('wan.msg23')">
+      				  </td>
+      				</tr>
+      		      </tbody>
+      			</table></td>
+                </tr>
+                <tr><td colspan="2" height="20"></td></tr>
+                <tr>
+                <td colspan="2" align="center">
+                  <button type="button" class="btn" @click="back(0)">{{ lang_t('common.back') }}</button>
+      		    <span v-if="model4g">
+      			  &nbsp;&nbsp;
+      			  <button type="button" :class="[globalConfig.autoDetectClass == 'ru' || globalConfig.autoDetectClass == 'uk' ? 'btn_auto' :'btn']" @click="discover">{{ lang_t('common.auto_detect') }}</button>
+      		    </span>
+                  &nbsp;&nbsp;
+                  <button type="button" class="btn" @click="next(2)">{{ lang_t('common.next') }}</button>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+      	<div v-show="menuStep==2">
+      	  <table>
+      		<tr><td>&nbsp;</td></tr>
+      		<tr>
+      		  <td>
+      		    <table class="table">
+      			  <tbody>
+      			    <tr>
+      				  <td>{{ lang_t('iptv.state') }}</td>
+      				  <td>
+      				    <x-switch v-model="iptvEnabled"></x-switch>
+      				  </td>
+      			    </tr>
+      			  </tbody>
+      			  <tbody v-show="iptvEnabled">
+      				<tr>
+      				  <td>{{ lang_t('iptv.mode') }}</td>
+      				  <td>
+      					<select v-model="m_iptvVer" @change="change_mode">
+      					  <option v-for="iptvmode in iptvmodeOption" :value="iptvmode.value" :key="iptvmode.value">{{iptvmode.option}}</option>
+      					</select>
+      				  </td>
+      				</tr>
+      				<tr v-show="show_internet_vid">
+      				  <td>802.1Q Tag</td>
+      				  <td>
+      					<x-checkbox v-model="tagflag" :disabled="tag_class"></x-checkbox>
+      				  </td>
+      				</tr>
+      				<tr v-show="show_internet_vid">
+      				  <td>{{ lang_t('iptv.vlan_id') }}</td>
+      				  <td>
+      					<input type="text" v-model="internetVid" v-verify="iptvRules" data-name="internetVid" :maxlength="4" :disabled="edit_disable" :class="[disable_class]">
+      				  </td>
+      				  <td>{{ lang_t('iptv.vlan_priority') }}</td>
+      				  <td>
+      					<select v-model="internetPri" :disabled="edit_disable">
+      					  <option value="0">0</option>
+      					  <option value="1">1</option>
+      					  <option value="2">2</option>
+      					  <option value="3">3</option>
+      					  <option value="4">4</option>
+      					  <option value="5">5</option>
+      					  <option value="6">6</option>
+      					  <option value="7">7</option>
+      					</select>
+      				  </td>
+      				</tr>
+      				<tr v-show="show_ipphone_vid">
+      				  <td>{{ lang_t('iptv.ipphone_vlan_id') }}</td>
+      				  <td>
+      					<input type="text" v-model="ipPhoneVid" v-verify="iptvRules" data-name="ipPhoneVid" :maxlength="4" :disabled="edit_disable"/>
+      				  </td>
+      				  <td>{{ lang_t('iptv.ipphone_vlan_priority') }}</td>
+      				  <td>
+      					<select v-model="ipPhonePri" :disabled="edit_disable">
+      					  <option value="0">0</option>
+      					  <option value="1">1</option>
+      					  <option value="2">2</option>
+      					  <option value="3">3</option>
+      					  <option value="4">4</option>
+      					  <option value="5">5</option>
+      					  <option value="6">6</option>
+      					  <option value="7">7</option>
+      					</select>
+      				  </td>
+      				</tr>
+      				<tr v-show="show_iptv_vid">
+      				  <td>{{ lang_t('iptv.iptv_vlan_id') }}</td>
+      				  <td>
+      					<input type="text" v-model="iptvVid" v-verify="iptvRules" data-name="iptvVid" :maxlength="4" :disabled="edit_disable"/>
+      				  </td>
+      				  <td>{{ lang_t('iptv.iptv_vlan_priority') }}</td>
+      				  <td>
+      					<select v-model="iptvPri" :disabled="edit_disable">
+      					  <option value="0">0</option>
+      					  <option value="1">1</option>
+      					  <option value="2">2</option>
+      					  <option value="3">3</option>
+      					  <option value="4">4</option>
+      					  <option value="5">5</option>
+      					  <option value="6">6</option>
+      					  <option value="7">7</option>
+      					</select>
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td v-show="lan_show_flag_1">LAN 1</td>
+      				  <td v-show="lan_show_flag_1">
+      				    <select v-model="lan1" :disabled="edit_disable">
+      				      <option value="1">IPTV</option>
+      				      <option value="2">IP-Phone</option>
+      				      <option value="3">{{ lang_t('iptv.internet') }}</option>
+      				    </select>
+      				  </td>
+      				  <td v-show="lan_show_flag_2">LAN 2</td>
+      				  <td v-show="lan_show_flag_2">
+      				    <select v-model="lan2" :disabled="edit_disable">
+      				      <option value="1">IPTV</option>
+      				      <option value="2">IP-Phone</option>
+      				      <option value="3">{{ lang_t('iptv.internet') }}</option>
+      				    </select>
+      				  </td>
+      				</tr>
+      				<tr>
+      				  <td v-show="lan_show_flag_3">LAN 3</td>
+      				  <td v-show="lan_show_flag_3">
+      				    <select v-model="lan3" :disabled="edit_disable">
+      				      <option value="1">IPTV</option>
+      				      <option value="2">IP-Phone</option>
+      				      <option value="3">{{ lang_t('iptv.internet') }}</option>
+      				    </select>
+      				  </td>
+      				  <td v-show="lan_show_flag_4">LAN 4</td>
+      				  <td v-show="lan_show_flag_4">
+      				    <select v-model="lan4" :disabled="edit_disable">
+      				      <option value="1">IPTV</option>
+      				      <option value="2">IP-Phone</option>
+      				      <option value="3">{{ lang_t('iptv.internet') }}</option>
+      				    </select>
+      				  </td>
+      			    </tr>
+      			  </tbody>
+      				<tbody v-if="iptvEnabled&&globalConfig.softwareType!='Indonesia'">
+      				  <tr>
+      					<td v-show="wlan0_show_flag">2.4G WiFi</td>
+      					<td v-show="wlan0_show_flag">
+      					  <select v-model="wlan0" :disabled="edit_disable">
+      						<option value="1">IPTV</option>
+      						<option value="2">IP-Phone</option>
+      						<option value="3">{{ lang_t('iptv.internet') }}</option>
+      					  </select>
+      					</td>
+      					<td v-show="wlan0_guest_show_flag">2.4G {{ lang_t('menu.guest') }}</td>
+      					<td v-show="wlan0_guest_show_flag">
+      					  <select v-model="wlan0_guest" :disabled="edit_disable">
+      						<option value="1">IPTV</option>
+      						<option value="2">IP-Phone</option>
+      						<option value="3">{{ lang_t('iptv.internet') }}</option>
+      					  </select>
+      					</td>
+      				  </tr>
+      				  <tr v-if="wifiDualband != '0'">
+      					<td>
+      						<span v-show="wlan1_show_flag && wifiDualband == '1'">5G WiFi</span>
+      					</td>
+      					<td v-show="wlan1_show_flag">
+      					  <select v-model="wlan1" :disabled="edit_disable">
+      						<option value="1">IPTV</option>
+      						<option value="2">IP-Phone</option>
+      						<option value="3">{{ lang_t('iptv.internet') }}</option>
+      					  </select>
+      					</td>
+      					<td>
+      						<span v-show="wlan1_guest_show_flag && wifiDualband == '1'">5G {{ lang_t('menu.guest') }}</span>
+      					</td>
+      					<td v-show="wlan1_guest_show_flag">
+      					  <select v-model="wlan1_guest" :disabled="edit_disable">
+      						<option value="1">IPTV</option>
+      						<option value="2">IP-Phone</option>
+      						<option value="3">{{ lang_t('iptv.internet') }}</option>
+      					  </select>
+      					</td>
+      				  </tr>
+      				</tbody>
+      				<tbody v-if="iptvEnabled&&globalConfig.softwareType=='Indonesia'">
+      				  <tr>
+      					<td v-show="wlan0_show_flag">2.4G WiFi</td>
+      					<td v-show="wlan0_show_flag">
+      					  <select v-model="wlan0" :disabled="edit_disable">
+      						<option value="1">IPTV</option>
+      						<option value="2">IP-Phone</option>
+      						<option value="3">{{ lang_t('iptv.internet') }}</option>
+      					  </select>
+      					</td>
+      					<td>
+      						<span v-show="wlan1_show_flag">5G WiFi</span>
+      					</td>
+      					<td v-show="wlan1_show_flag">
+      					  <select v-model="wlan1" :disabled="edit_disable">
+      						<option value="1">IPTV</option>
+      						<option value="2">IP-Phone</option>
+      						<option value="3">{{ lang_t('iptv.internet') }}</option>
+      					  </select>
+      					</td>
+      				  </tr>
+      				  <tr v-for="(v,i) in 4" :key="i">
+      					<td v-show="wlan0_guest_show_flag">2.4G {{ lang_t('menu.guest') }} {{v}}</td>
+      					<td v-show="wlan0_guest_show_flag">
+      					  <select v-model="wlan0Guest[i]" :disabled="edit_disable">
+      						<option value="1">IPTV</option>
+      						<option value="2">IP-Phone</option>
+      						<option value="3">{{ lang_t('iptv.internet') }}</option>
+      					  </select>
+      					</td>
+      					<td>
+      						<span v-show="wlan1_guest_show_flag">5G {{ lang_t('menu.guest') }} {{v}}</span>
+      					</td>
+      					<td v-show="wlan1_guest_show_flag">
+      					  <select v-model="wlan1Guest[i]" :disabled="edit_disable">
+      						<option value="1">IPTV</option>
+      						<option value="2">IP-Phone</option>
+      						<option value="3">{{ lang_t('iptv.internet') }}</option>
+      					  </select>
+      					</td>
+      				  </tr>
+      				</tbody>
+      			 </table>
+      		   </td>
+      	    </tr>
+      	    <tr><td height="20"></td></tr>
+      	    <tr>
+      		  <td align="center">
+      		    <button type="button" class="btn" @click="back(2)">{{ lang_t('common.back') }}</button>
+      		    &nbsp;&nbsp;
+      		    <button type="button" class="btn" @click="next(3)">{{ lang_t('common.next') }}</button>
+      	      </td>
+      	    </tr>
+      	  </table>
+      	</div>
+
+          <div v-show="menuStep==3">
+            <table>
+              <tr><td>&nbsp;</td></tr>
+              <tr>
+                <td><table class="table">
+                  <tbody>
+                  <tr v-if="wifiDualband != '0'">
+                	  <td></td>
+                    <td>
+                    	<x-checkbox v-model="wifi.merge">{{ lang_t('wifi.merge') }}</x-checkbox>
+                    </td>
+                  </tr>
+      			<tr><td colspan="2"></td></tr>
+      			<tr v-show="!wifi.merge">
+      			  <td></td>
+      			  <td><b>{{ lang_t('wifi.wireless') }} 2.4GHz</b></td>
+      	  	    </tr>
+                  <tr>
+                    <td>{{ lang_t('wifi.state') }}</td>
+                    <td>
+                    	<x-switch v-model="wifi.wifiOff" @change="wifiState('2g')" :disabled="disabled2g"></x-switch>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>{{ lang_t('wifi.ssid') }}</td>
+                    <td>
+                      <input type="text" v-model="wifi.ssid" maxlength="32" :disabled="ssidclass" v-verify="wifiRules" data-name="ssid">
+                      <x-checkbox v-model="wifi.hssid" :disabled="hssidclass">{{ lang_t('wifi.hide') }}</x-checkbox>
+                     </td>
+                  </tr>
+                  <tr>
+      			  <td>{{ lang_t('wifi.pass_state') }}</td>
+      			  <td>
+      				<x-switch v-model="ispass" :disabled="keyclass"></x-switch>
+      			  </td>
+      			</tr>
+                  <tr v-show="ispass">
+                    <td>{{ lang_t('wifi.pass') }}</td>
+                    <td>
+                      <input type="password" class="input input-err" v-model="wifi.key" maxlength="63" :disabled="keyclass" v-pass v-verify="wifiRules" data-name="key">
+                      <x-checkbox v-model="wpa3" v-if="globalConfig.wifiWpa2Wpa3Support" @change="wpaChange" :disabled="keyclass">{{ lang_t('wifi.wpa3') }}</x-checkbox>
+                    </td>
+                  </tr>
+      			</tbody>
+                  <tbody v-if="!wifi.merge && wifiDualband != '0'">
+                  <tr><td colspan="2"></td></tr>
+      			<tr>
+      			  <td></td>
+      			  <td><b>{{ lang_t('wifi.wireless') }} 5GHz</b></td>
+      		    </tr>
+                  <tr>
+                    <td>{{ lang_t('wifi.state') }}</td>
+                    <td>
+                    	<x-switch v-model="wifi.wifiOff5g" @change="wifiState('5g')" :disabled="disabled5g"></x-switch>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>{{ lang_t('wifi.ssid') }}</td>
+                    <td>
+                      <input type="text" v-model="wifi.ssid5g" maxlength="32" :disabled="ssid5gclass" v-verify="wifiRules" data-name="ssid5g">
+                      <x-checkbox v-model="wifi.hssid5g" :disabled="hssid5gclass">{{ lang_t('wifi.hide') }}</x-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+      			  <td>{{ lang_t('wifi.pass_state') }}</td>
+      			  <td>
+      				<x-switch v-model="ispass5g" :disabled="key5gclass"></x-switch>
+      			  </td>
+      			</tr>
+                  <tr v-show="ispass5g">
+                    <td>{{ lang_t('wifi.pass') }}</td>
+                    <td>
+                      <input type="password" class="input input-err" v-model="wifi.key5g" maxlength="63" :disabled="key5gclass" v-pass v-verify="wifiRules" data-name="key5g">
+                      <x-checkbox v-model="wpa5g" v-if="globalConfig.wifiWpa2Wpa3Support" @change="wpaChange" :disabled="key5gclass">{{ lang_t('wifi.wpa3') }}</x-checkbox>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table></td>
+              </tr>
+              <tr><td height="20"></td></tr>
+              <tr>
+                <td align="center">
+                  <button type="button" class="btn" @click="back(1)">{{ lang_t('common.back') }}</button>
+                  &nbsp;&nbsp;
+                  <button type="button" class="btn" @click="next(4)">{{ lang_t('common.next') }}</button>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <div v-show="menuStep==4">
+            <table>
+              <tr><td>&nbsp;</td></tr>
+              <tr>
+                <td><table class="table">
+                  <tbody>
+                  <tr>
+      			  <td>{{ lang_t('wizard.login_pass') }}</td>
+      			  <td align="left">
+      				<input type="password" class="input input-err" v-model="loginpass" maxlength="32" v-pass v-verify="loginRules" data-name="loginpass" id="login_pass" :readonly="definePass">
+      				<div style="padding-top:4px;" v-show="pwdclass_show">
+      	  			  <span :class="[bar,color_sapn]"></span>
+      	  			  <span :class="[bar,color_sapn]"></span>
+      	  			  <span :class="[bar,color_sapn]"></span>
+      	  			</div>
+      			  </td>
+      			</tr>
+      			<tr>
+      			  <td></td>
+      			  <td  align="left">
+      			  	<x-checkbox v-model="definePass" :disabled="hssidclass2g" @change="wifiState('define_pass')">{{ lang_t('wizard.use_wifi2g_pass') }}</x-checkbox>
+      			  </td>
+      			</tr>
+      		  	</tbody>
+      		  </table></td>
+              </tr>
+              <tr><td height="20"></td></tr>
+              <tr>
+                <td align="center">
+                  <button type="button" class="btn" @click="back(2)">{{ lang_t('common.back') }}</button>
+                  &nbsp;&nbsp;
+                  <button type="button" class="btn" @click="next(5)">{{ lang_t('common.next') }}</button>
+               </td>
+              </tr>
+            </table>
+          </div>
+
+          <div v-show="menuStep==5">
+            <table style="border-collapse:separate; border-spacing:13px">
+              <tr>
+      		  <td width="90">{{ lang_t('wan.proto') }}:</td>
+                <td>{{ wanMode }}</td>
+              </tr>
+              <tr>
+      		  <td colspan="2">
+      			<div class="done-wifi-layout">
+      			  <div class="layout" id="done_layout1">
+      				<div class="row">
+      				  <div class="col1"><b>{{ lang_t('wifi.wireless') }} 2.4GHz:</b></div>
+      				  <div class="col2">{{ wifi.wifiOff ? lang_t('common.on') : lang_t('common.off') }}</div>
+      				</div>
+      				<div class="row">
+      				  <div class="col1">{{ lang_t('wifi.ssid') }}:</div>
+      				  <div class="col2" style="white-space: pre-wrap;">{{ wifi.ssid }}</div>
+      				</div><br/><br/>
+      				<div class="row">
+      				  <div class="col1">{{ lang_t('wifi.pass') }}:</div>
+      				  <div class="col2">
+      					<div v-if="(wifi.key == '' || !ispass)">
+      					  <span>{{ lang_t('wifi.dispass') }}</span>
+      					</div>
+      					<div v-else>
+      					  <span v-show="key_state == true">
+          				    {{ wifi.key }}
+          				    <img src="static/images/ueye.png" @click="key_state_change()" class="cursor">
+          				  </span>
+          				  <span v-show="key_state == false">
+          				    ********
+          				    <img src="static/images/eye.png" @click="key_state_change()" class="cursor">
+          				  </span>
+              			</div>
+      				  </div>
+      				</div>
+      			  </div>
+      			  <div class="layout" style="border-left: none;" v-if="wifiDualband != '0'" id="done_layout2">
+      				<div class="row">
+      				  <div class="col1"><b>{{ lang_t('wifi.wireless') }} 5GHz:</b></div>
+      				  <div class="col2">{{ wifi.merge ? (wifi.wifiOff? lang_t('common.on') : lang_t('common.off')): (wifi.wifiOff5g ? lang_t('common.on') : lang_t('common.off')) }}</div>
+      				</div>
+      				<div class="row">
+      				  <div class="col1">{{ lang_t('wifi.ssid') }}:</div>
+      				  <div class="col2" style="white-space: pre-wrap;">{{ wifi.merge ?wifi.ssid: wifi.ssid5g  }}</div>
+      				</div><br/><br/>
+      				<div class="row">
+      				  <div class="col1">{{ lang_t('wifi.pass') }}:</div>
+      				  <div class="col2">
+      					<div v-if="((wifi.key5g == '' || !ispass5g) && !wifi.merge) || (wifi.merge && wifi.key=='')">
+      					  <span>{{ lang_t('wifi.dispass') }}</span>
+      					</div>
+      					<div v-else>
+      					  <span v-show="key5g_state == true">
+              				{{ wifi.merge?wifi.key:wifi.key5g }}
+              				<img src="static/images/ueye.png" @click="key5g_state_change()" class="cursor">
+              			  </span>
+              			  <span v-show="key5g_state == false">
+              				********
+              				<img src="static/images/eye.png" @click="key5g_state_change()" class="cursor">
+              			  </span>
+              			</div>
+      				  </div>
+      				</div>
+      			  </div>
+      			</div>
+      		  </td>
+              </tr>
+              <tr v-show="!globalConfig.projectOwnerTw">
+      		  <td>{{ lang_t('wizard.login_pass') }}:</td>
+      		  <td>
+      			<span v-show="loginpass_state == true">
+      			  {{ loginpass }}
+      			  <img src="static/images/ueye.png" @click="loginpass_state_change()" class="cursor">
+      			</span>
+      			<span v-show="loginpass_state == false">
+      			  ********
+      			  <img src="static/images/eye.png" @click="loginpass_state_change()" class="cursor">
+      			</span>
+      		  </td>
+              </tr>
+              <tr><td colspan="2" height="20"></td></tr>
+              <tr>
+                <td colspan="3" align="center">
+                  <button type="button" class="btn" @click="back(3)">{{ lang_t('common.back') }}</button>
+                  &nbsp;&nbsp;
+                  <button type="button" class="btn" @click="handleSubmit">{{ lang_t('common.done') }}</button>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </script>
+    <script src="/plugin/vue.js"></script>
+    <script src="/plugin/jquery-3.2.1.min.js"></script>
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/layout.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/topicurl.js"></script>
+    <script>
+      var cs_main = {
+        template: "#main",
+        data: function () {
+          return {
+            globalConfig: globalConfig,
+            lang: $.lang,
+            lang_t: lang_t,
+            model4g: !0,
+            menuStep: 0,
+            pwdclass_show: !1,
+            macDisabled: !1,
+            wifiDualband: "0",
+            hssidclass2g: !1,
+            hssidclass: !1,
+            hssid5gclass: !1,
+            ssidclass: !1,
+            ssid5gclass: !1,
+            keyclass: !1,
+            key5gclass: !1,
+            color_sapn: "",
+            bar: "bar",
+            defaultMac: "",
+            wanMode: "",
+            proto: "",
+            priDns: "",
+            secDns: "",
+            tz: "",
+            mian_proto: "1",
+            pppoeUser: "",
+            pppoePass: "",
+            pppoeServiceName: "",
+            pppoeAcName: "",
+            pppoeMtu: "",
+            pptpMode: "",
+            pptpIp: "",
+            pptpMask: "",
+            pptpGw: "",
+            pptpUser: "",
+            pptpPass: "",
+            pptpMtu: "",
+            pptpMppe: "",
+            pptpMppc: "",
+            pptpDomainFlag: "",
+            pptpServerIp: "",
+            pptpServerDomain: "",
+            pptpServer: "",
+            l2tpMode: "",
+            l2tpIp: "",
+            l2tpMask: "",
+            l2tpGw: "",
+            l2tpUser: "",
+            l2tpPass: "",
+            l2tpMtu: "",
+            l2tpDomainFlag: "",
+            l2tpServerIp: "",
+            l2tpServerDomain: "",
+            l2tpServer: "",
+            staticIp: "",
+            staticMask: "",
+            staticGw: "",
+            staticMtu: "",
+            dhcpMtu: "",
+            m_priDns: "",
+            m_secDns: "",
+            dnsMode: "0",
+            clone: "",
+            cloneMac: "",
+            loginpass: "",
+            definePass: !1,
+            domain_ip: "",
+            wifi: {
+              merge: !0,
+              wifiOff: !1,
+              ssid: "",
+              key: "",
+              hssid: !1,
+              wifiOff5g: !1,
+              ssid5g: "",
+              key5g: "",
+              hssid5g: !1,
+            },
+            wpa3: !1,
+            wpa5g: !1,
+            dnsFlag: !0,
+            dnsAbled: !1,
+            strategy: "1",
+            ipStatus: "",
+            lanIp: "",
+            moduleType: "",
+            lteCfg: {
+              mode4g: "0",
+              apn: "",
+              dialNum: "",
+              user4g: "",
+              pass4g: "",
+              pinCode: "",
+              validation: "0",
+            },
+            paddingValue: "auto",
+            disabled2g: !1,
+            disabled5g: !1,
+            ispass: !1,
+            ispass5g: !1,
+            loginpass_state: !1,
+            key_state: !1,
+            key5g_state: !1,
+            iptvVer: "0",
+            edit_disable: !1,
+            show_internet_vid: !1,
+            show_ipphone_vid: !1,
+            show_iptv_vid: !1,
+            disable_class: "disable-class",
+            classOn: !1,
+            tag_class: !1,
+            initdata: "",
+            m_iptvVer: "2",
+            iptvEnabled: !1,
+            internetVid: "7",
+            internetPri: "3",
+            tagflag: !1,
+            ipPhoneVid: "22",
+            ipPhonePri: "5",
+            iptvVid: "10",
+            iptvPri: "2",
+            lan1: "1",
+            lan2: "3",
+            lan3: "2",
+            lan4: "1",
+            wlan0: "2",
+            wlan0_guest: "1",
+            wlan1: "1",
+            wlan1_guest: "2",
+            lan_show: "1,1,1,1",
+            wlan_show: "1,1,1,1,1,1",
+            lan_show_flag_1: !1,
+            lan_show_flag_2: !1,
+            lan_show_flag_3: !1,
+            lan_show_flag_4: !1,
+            wlan0_show_flag: !1,
+            wlan0_guest_show_flag: !1,
+            wlan1_show_flag: !1,
+            wlan1_guest_show_flag: !1,
+            wlan0Guest: [],
+            wlan1Guest: [],
+          };
+        },
+        watch: {
+          loginpass: function () {
+            var t = this.loginpass;
+            0 == t.length
+              ? ((this.pwdclass_show = !1), (this.color_sapn = ""))
+              : ((this.pwdclass_show = !0),
+                t.length < 5
+                  ? (this.color_sapn = "weak")
+                  : /^[0-9]*$/.test(t) || /^[A-Za-z]+$/.test(t) || "admin" == t
+                  ? (this.color_sapn = "weak medium")
+                  : (this.color_sapn = "weak medium strong"));
+          },
+          mian_proto: function () {
+            this.dnsFlag ? this.wanChange() : (this.dnsFlag = !0);
+          },
+        },
+        computed: {
+          menuSelect: function () {
+            var t = globalConfig.wizardIptvSupport
+                ? '<td class="nowrap">' +
+                  this.lang_t("wizard.iptv") +
+                  "</td><td></td>"
+                : "",
+              i = globalConfig.projectOwnerTw
+                ? ""
+                : '<td class="nowrap">' +
+                  this.lang_t("wizard.change_pwd") +
+                  "</td><td></td>",
+              a =
+                '    \t\t<table align="center" width="760">    \t\t\t<tr align="center">\t\t\t\t  <td class="active nowrap">' +
+                this.lang_t("wizard.timezone") +
+                '</td><td></td>\t\t\t\t  <td class="nowrap">' +
+                this.lang_t("wizard.internet") +
+                "</td><td></td>\t\t\t\t  " +
+                t +
+                '\t\t          <td class="nowrap">' +
+                this.lang_t("wizard.wireless") +
+                "</td><td></td>\t\t          " +
+                i +
+                '\t\t          <td class="nowrap">' +
+                this.lang_t("wizard.summary") +
+                '</td>\t\t\t\t</tr>\t\t\t\t<tr align="center">',
+              n = this.menuStep,
+              s = 4;
+            globalConfig.wizardIptvSupport && (s += 1),
+              globalConfig.projectOwnerTw || (s += 1),
+              !globalConfig.wizardIptvSupport && 2 < n && n--;
+            for (var p = 0; p < s; p++)
+              (a +=
+                p <= n
+                  ? '<td><div class="tick-active"></div></td>'
+                  : '<td><div class="tick-checked">' +
+                    Number(p + 1) +
+                    "</div></td>"),
+                p != s - 1 &&
+                  (a +=
+                    0 < n && p < n
+                      ? '<td class="line2"></td>'
+                      : '<td class="line1"></td>');
+            return (a += "</tr></table>");
+          },
+          iptvmodeOption: function () {
+            return [
+              { option: "Singapore-Singtel", value: "1" },
+              { option: "Malaysia-Unifi", value: "2" },
+              { option: "Malaysia-Maxis 1", value: "3" },
+              { option: "Malaysia-Maxis 2", value: "6" },
+              { option: "Malaysia-Celcom", value: "7" },
+              { option: "VTV", value: "4" },
+              { option: "Taiwan", value: "5" },
+              { option: "User Define", value: "0" },
+            ];
+          },
+          vpnModeName: function () {
+            return [this.lang_t("wan.dynamic"), this.lang_t("wan.static")];
+          },
+          mppeName: function () {
+            return ["MPPE", "MPPC"];
+          },
+          dnsModeName: function () {
+            return [this.lang_t("wan.auto_dns"), this.lang_t("wan.manual_dns")];
+          },
+          cloneName: function () {
+            return [this.lang_t("wan.default"), this.lang_t("wan.clone")];
+          },
+          wanRules: function () {
+            var n = this;
+            return {
+              staticIp: function (t, i) {
+                if ("0" == n.mian_proto) {
+                  var a = cs.ip(t);
+                  0 == a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg1"))
+                    : 1 == a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg20"))
+                    : 99 != a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg20"))
+                    : t == location.host
+                    ? i(n.lang_t("rule.msg57"))
+                    : cs.ip_subnet(t, n.lanMask, n.lanIp)
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg32"))
+                    : i();
+                } else i();
+              },
+              staticMask: function (t, i) {
+                "0" == n.mian_proto
+                  ? t
+                    ? 1 == cs.mask(t)
+                      ? i(n.lang_t("wan.msg5"))
+                      : "0.0.0.0" == t || "255.255.255.255" == t
+                      ? i(n.lang_t("wan.msg5"))
+                      : i()
+                    : i(n.lang_t("wan.mask") + n.lang_t("wan.msg1"))
+                  : i();
+              },
+              staticGw: function (t, i) {
+                if ("0" == n.mian_proto) {
+                  var a = cs.ip(t);
+                  0 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg1"))
+                    : 1 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg20"))
+                    : 2 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg2"))
+                    : 3 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg3"))
+                    : 4 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg4"))
+                    : cs.ip_subnet(t, n.staticMask, n.staticIp)
+                    ? i()
+                    : i(n.lang_t("wan.msg6"));
+                } else i();
+              },
+              priDns: function (t, i) {
+                "0" == n.mian_proto ||
+                ("4" == n.mian_proto && "1" == n.pptpMode) ||
+                ("6" == n.mian_proto && "1" == n.l2tpMode)
+                  ? t
+                    ? 99 != cs.ip(t)
+                      ? i(n.lang_t("wan.pri_dns") + n.lang_t("wan.msg20"))
+                      : i()
+                    : i(n.lang_t("wan.pri_dns") + n.lang_t("wan.msg1"))
+                  : i();
+              },
+              secDns: function (t, i) {
+                "0" == n.mian_proto ||
+                ("4" == n.mian_proto && "1" == n.pptpMode) ||
+                ("6" == n.mian_proto && "1" == n.l2tpMode)
+                  ? "" == t
+                    ? i()
+                    : 99 != cs.ip(t)
+                    ? i(n.lang_t("wan.sec_dns") + n.lang_t("wan.msg20"))
+                    : i()
+                  : i();
+              },
+              pppoeUser: function (t, i) {
+                "3" == n.mian_proto
+                  ? 0 == cs.string(t, "dun")
+                    ? i(n.lang_t("wan.user") + n.lang_t("wan.msg1"))
+                    : i()
+                  : i();
+              },
+              pppoePass: function (t, i) {
+                if ("3" == n.mian_proto) {
+                  var a = cs.string(t, "dun");
+                  0 == a
+                    ? i(n.lang_t("wan.pass") + n.lang_t("wan.msg1"))
+                    : 1 == a
+                    ? i(n.lang_t("wan.pass") + n.lang_t("wan.msg22"))
+                    : i();
+                } else i();
+              },
+              pppoeServiceName: function (t, i) {
+                "3" == n.mian_proto
+                  ? 1 == cs.string(t)
+                    ? i(n.lang_t("wan.server_name") + n.lang_t("wan.msg22"))
+                    : i()
+                  : i();
+              },
+              pppoeAcName: function (t, i) {
+                "3" == n.mian_proto
+                  ? 1 == cs.string(t)
+                    ? i(n.lang_t("wan.ac_name") + n.lang_t("wan.msg22"))
+                    : i()
+                  : i();
+              },
+              pptpIp: function (t, i) {
+                if ("4" == n.mian_proto && "1" == n.pptpMode) {
+                  var a = cs.ip(t);
+                  0 == a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg1"))
+                    : 1 == a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg20"))
+                    : 2 == a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg2"))
+                    : 3 == a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg3"))
+                    : 4 == a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg4"))
+                    : i();
+                } else i();
+              },
+              pptpMask: function (t, i) {
+                "4" == n.mian_proto && "1" == n.pptpMode
+                  ? t
+                    ? 1 == cs.mask(t)
+                      ? i(n.lang_t("wan.msg5"))
+                      : "0.0.0.0" == t || "255.255.255.255" == t
+                      ? i(n.lang_t("wan.msg5"))
+                      : i()
+                    : i(n.lang_t("wan.mask") + n.lang_t("wan.msg1"))
+                  : i();
+              },
+              pptpGw: function (t, i) {
+                if ("4" == n.mian_proto && "1" == n.pptpMode) {
+                  var a = cs.ip(t);
+                  0 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg1"))
+                    : 1 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg20"))
+                    : 2 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg2"))
+                    : 3 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg3"))
+                    : 4 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg4"))
+                    : cs.ip_subnet(t, n.pptpMask, n.pptpIp)
+                    ? i()
+                    : i(n.lang_t("wan.msg6"));
+                } else i();
+              },
+              pptpServer: function (t, i) {
+                "4" == n.mian_proto
+                  ? t
+                    ? cs.isUrl(t)
+                      ? i()
+                      : i(n.lang_t("vpn.server") + n.lang_t("wan.msg20"))
+                    : i(n.lang_t("vpn.server") + n.lang_t("wan.msg1"))
+                  : i();
+              },
+              pptpUser: function (t, i) {
+                "4" == n.mian_proto
+                  ? 0 == cs.string(t)
+                    ? i(n.lang_t("wan.user") + n.lang_t("wan.msg1"))
+                    : i()
+                  : i();
+              },
+              pptpPass: function (t, i) {
+                if ("4" == n.mian_proto) {
+                  var a = cs.string(t);
+                  0 == a
+                    ? i(n.lang_t("wan.pass") + n.lang_t("wan.msg1"))
+                    : 1 == a
+                    ? i(n.lang_t("wan.pass") + n.lang_t("wan.msg22"))
+                    : i();
+                } else i();
+              },
+              l2tpIp: function (t, i) {
+                if ("6" == n.mian_proto && "1" == n.l2tpMode) {
+                  var a = cs.ip(t);
+                  0 == a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg1"))
+                    : 1 == a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg20"))
+                    : 2 == a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg2"))
+                    : 3 == a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg3"))
+                    : 4 == a
+                    ? i(n.lang_t("wan.ip") + n.lang_t("wan.msg4"))
+                    : i();
+                } else i();
+              },
+              l2tpMask: function (t, i) {
+                "6" == n.mian_proto && "1" == n.l2tpMode
+                  ? t
+                    ? 1 == cs.mask(t)
+                      ? i(n.lang_t("wan.msg5"))
+                      : "0.0.0.0" == t || "255.255.255.255" == t
+                      ? i(n.lang_t("wan.msg5"))
+                      : i()
+                    : i(n.lang_t("wan.mask") + n.lang_t("wan.msg1"))
+                  : i();
+              },
+              l2tpGw: function (t, i) {
+                if ("6" == n.mian_proto && "1" == n.l2tpMode) {
+                  var a = cs.ip(t);
+                  0 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg1"))
+                    : 1 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg20"))
+                    : 2 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg2"))
+                    : 3 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg3"))
+                    : 4 == a
+                    ? i(n.lang_t("wan.gateway") + n.lang_t("wan.msg4"))
+                    : cs.ip_subnet(t, n.l2tpMask, n.l2tpIp)
+                    ? i()
+                    : i(n.lang_t("wan.msg6"));
+                } else i();
+              },
+              l2tpServer: function (t, i) {
+                "6" == n.mian_proto
+                  ? t
+                    ? cs.isUrl(t)
+                      ? i()
+                      : i(n.lang_t("vpn.server") + n.lang_t("wan.msg20"))
+                    : i(n.lang_t("vpn.server") + n.lang_t("wan.msg1"))
+                  : i();
+              },
+              l2tpUser: function (t, i) {
+                "6" == n.mian_proto
+                  ? 0 == cs.string(t)
+                    ? i(n.lang_t("wan.user") + n.lang_t("wan.msg1"))
+                    : i()
+                  : i();
+              },
+              l2tpPass: function (t, i) {
+                if ("6" == n.mian_proto) {
+                  var a = cs.string(t);
+                  0 == a
+                    ? i(n.lang_t("wan.pass") + n.lang_t("wan.msg1"))
+                    : 1 == a
+                    ? i(n.lang_t("wan.pass") + n.lang_t("wan.msg22"))
+                    : i();
+                } else i();
+              },
+              cloneMac: function (t, i) {
+                t || i(n.lang_t("rule.mac") + n.lang_t("rule.msg12"));
+                var a = cs.mac(t);
+                1 == a
+                  ? i(n.lang_t("rule.msg17"))
+                  : 2 == a
+                  ? i(n.lang_t("rule.msg18"))
+                  : 3 == a
+                  ? i(n.lang_t("rule.msg19"))
+                  : 99 == a && i();
+              },
+              domain_ip: function (t, i) {
+                if ("0" == n.strategy) {
+                  var a = cs.ip(t);
+                  1 == a
+                    ? i(n.lang_t("wan.detect_addr") + n.lang_t("wan.msg20"))
+                    : 2 == a
+                    ? i(n.lang_t("wan.detect_addr") + n.lang_t("wan.msg2"))
+                    : 3 == a
+                    ? i(n.lang_t("wan.detect_addr") + n.lang_t("wan.msg3"))
+                    : 4 == a
+                    ? i(n.lang_t("wan.detect_addr") + n.lang_t("wan.msg4"))
+                    : i();
+                } else i();
+              },
+            };
+          },
+          wifiRules: function () {
+            var n = this;
+            return {
+              ssid: function (t, i) {
+                var a = cs.ssid(t);
+                0 == a
+                  ? i(n.lang_t("wifi.msg1"))
+                  : 4 == a
+                  ? i(n.lang_t("wifi.msg18"))
+                  : 1 == a
+                  ? i(n.lang_t("wifi.msg20"))
+                  : 2 == a
+                  ? i(n.lang_t("wifi.msg3"))
+                  : i();
+              },
+              key: function (t, i) {
+                var a = cs.string(t);
+                n.ispass
+                  ? ("" == t && i(n.lang_t("wifi.pass") + n.lang_t("wan.msg1")),
+                    "" != t &&
+                      (1 == a
+                        ? i(n.lang_t("wifi.msg5"))
+                        : t.length < 8 || 63 < t.length
+                        ? i(n.lang_t("wifi.msg4"))
+                        : i()))
+                  : i();
+              },
+              ssid5g: function (t, i) {
+                var a = cs.ssid(t);
+                "0" != n.wifiDualband &&
+                  (0 == a
+                    ? i(n.lang_t("wifi.msg1"))
+                    : 4 == a
+                    ? i(n.lang_t("wifi.msg18"))
+                    : 1 == a
+                    ? i(n.lang_t("wifi.msg20"))
+                    : 2 == a
+                    ? i(n.lang_t("wifi.msg3"))
+                    : i());
+              },
+              ssid5g2: function (t, i) {
+                var a = cs.ssid(t);
+                "0" != n.wifiDualband &&
+                  (0 == a
+                    ? i(n.lang_t("wifi.msg1"))
+                    : 4 == a
+                    ? i(n.lang_t("wifi.msg18"))
+                    : 1 == a
+                    ? i(n.lang_t("wifi.msg20"))
+                    : 2 == a
+                    ? i(n.lang_t("wifi.msg3"))
+                    : i());
+              },
+              key5g: function (t, i) {
+                var a = cs.string(t);
+                "0" != n.wifiDualband && n.ispass5g
+                  ? ("" == t && i(n.lang_t("wifi.pass") + n.lang_t("wan.msg1")),
+                    "" != t &&
+                      (1 == a
+                        ? i(n.lang_t("wifi.msg5"))
+                        : t.length < 8 || 63 < t.length
+                        ? i(n.lang_t("wifi.msg4"))
+                        : i()))
+                  : i();
+              },
+            };
+          },
+          loginRules: function () {
+            var n = this;
+            return {
+              loginpass: function (t, i) {
+                var a = cs.string3(t);
+                0 == a
+                  ? i(n.lang_t("login.msg1"))
+                  : 1 == a
+                  ? i(n.lang_t("common.msg3"))
+                  : i();
+              },
+            };
+          },
+          iptvRules: function () {
+            var n = this;
+            return {
+              internetVid: function (t, i) {
+                var a = cs.num_range(t, 2, 4096);
+                0 == a
+                  ? i(n.lang_t("iptv.vlan_id") + n.lang_t("wan.msg1"))
+                  : 1 == a
+                  ? i(n.lang_t("iptv.vlan_id") + n.lang_t("rule.msg24"))
+                  : 2 == a
+                  ? i(n.lang_t("iptv.vlan_id") + n.lang_t("iptv.msg3"))
+                  : i();
+              },
+              ipPhoneVid: function (t, i) {
+                var a = cs.num_range(t, 2, 4096);
+                0 == a
+                  ? i(n.lang_t("iptv.ipphone_vlan_id") + n.lang_t("wan.msg1"))
+                  : 1 == a
+                  ? i(n.lang_t("iptv.ipphone_vlan_id") + n.lang_t("rule.msg24"))
+                  : 2 == a
+                  ? i(n.lang_t("iptv.ipphone_vlan_id") + n.lang_t("iptv.msg3"))
+                  : i();
+              },
+              iptvVid: function (t, i) {
+                var a = cs.num_range(t, 2, 4096);
+                0 == a
+                  ? i(n.lang_t("iptv.iptv_vlan_id") + n.lang_t("wan.msg1"))
+                  : 1 == a
+                  ? i(n.lang_t("iptv.iptv_vlan_id") + n.lang_t("rule.msg24"))
+                  : 2 == a
+                  ? i(n.lang_t("iptv.iptv_vlan_id") + n.lang_t("iptv.msg3"))
+                  : i();
+              },
+            };
+          },
+          ip4g: function () {
+            return "" == this.ipStatus
+              ? this.lang_t("wan.msg24")
+              : this.ipStatus;
+          },
+        },
+        mounted: function () {
+          (this.$refs.content_box.style.height =
+            window.innerHeight - 101 - 34 + "px"),
+            globalConfig.wizardIptvSupport && (this.iptvDis = !0);
+        },
+        created: function () {
+          var i = this;
+          uiPost.getWizardCfg(function (t) {
+            globalConfig.wizardIptvSupport &&
+              ((i.initdata = t),
+              (i.iptvEnabled = "1" == t.iptvEnabled),
+              (i.tagflag = "1" == t.tagFlag),
+              (i.m_iptvVer = t.iptvVer),
+              (i.lan_show = t.lan_show),
+              (i.wlan_show = t.wlan_show),
+              (i.edit_disable = "1" == t.iptvVer),
+              i.edit_disable && (i.tag_class = !0),
+              (i.show_internet_vid = "5" != t.iptvVer),
+              "3" == t.iptvVer || "4" == t.iptvVer || "0" == t.iptvVer
+                ? (i.show_ipphone_vid = !0)
+                : (i.show_ipphone_vid = !1),
+              (i.show_iptv_vid = "5" != t.iptvVer),
+              (i.internetVid = t.internetVid),
+              (i.internetPri = t.internetPri),
+              (i.ipPhoneVid = t.ipPhoneVid),
+              (i.ipPhonePri = t.ipPhonePri),
+              (i.iptvVid = t.iptvVid),
+              (i.iptvPri = t.iptvPri),
+              1 == i.lan_show[0] &&
+                ((i.lan1 = t.lan1), (i.lan_show_flag_1 = !0)),
+              1 == i.lan_show[2] &&
+                ((i.lan2 = t.lan2), (i.lan_show_flag_2 = !0)),
+              1 == i.lan_show[4] &&
+                ((i.lan3 = t.lan3), (i.lan_show_flag_3 = !0)),
+              1 == i.lan_show[6] &&
+                ((i.lan4 = t.lan4), (i.lan_show_flag_4 = !0)),
+              1 == i.wlan_show[0] &&
+                ((i.wlan0 = t.wlan0), (i.wlan0_show_flag = !0)),
+              1 == i.wlan_show[2] &&
+                ((i.wlan0_guest = t.wlan0_guest),
+                (i.wlan0_guest_show_flag = !0)),
+              1 == i.wlan_show[4] &&
+                ((i.wlan1 = t.wlan1), (i.wlan1_show_flag = !0)),
+              1 == i.wlan_show[6] &&
+                ((i.wlan1_guest = t.wlan1_guest),
+                (i.wlan1_guest_show_flag = !0)),
+              i.change_mode()),
+              (i.lanIp = t.lanIp),
+              (i.lanMask = t.lanNetMask || "255.255.255.0"),
+              (i.defaultMac = t.defaultMac),
+              (i.tz = t.tz),
+              (i.mian_proto = t.proto),
+              (i.pppoeUser = t.pppoeUser),
+              (i.pppoePass = t.pppoePass),
+              (i.pppoeServiceName = t.pppoeServiceName),
+              (i.pppoeAcName = t.pppoeAcName),
+              (i.pppoeMtu = t.pppoeMtu),
+              (i.pptpMode = t.pptpMode),
+              (i.pptpIp = t.pptpIp),
+              (i.pptpMask = t.pptpMask),
+              (i.pptpGw = t.pptpGw),
+              (i.pptpDomainFlag = t.pptpDomainFlag),
+              "0" == t.pptpDomainFlag
+                ? (i.pptpServer = t.pptpServerIp)
+                : (i.pptpServer = t.pptpServerDomain),
+              (i.pptpUser = t.pptpUser),
+              (i.pptpPass = t.pptpPass),
+              (i.pptpMtu = t.pptpMtu),
+              (i.pptpMppe = "1" == t.pptpMppe),
+              (i.pptpMppc = "1" == t.pptpMppc),
+              (i.l2tpMode = t.l2tpMode),
+              (i.l2tpIp = t.l2tpIp),
+              (i.l2tpMask = t.l2tpMask),
+              (i.l2tpGw = t.l2tpGw),
+              (i.l2tpDomainFlag = t.l2tpDomainFlag),
+              "0" == t.l2tpDomainFlag
+                ? (i.l2tpServer = t.l2tpServerIp)
+                : (i.l2tpServer = t.l2tpServerDomain),
+              (i.l2tpUser = t.l2tpUser),
+              (i.l2tpPass = t.l2tpPass),
+              (i.l2tpMtu = t.l2tpMtu),
+              (i.staticIp = t.staticIp),
+              (i.staticMask = t.staticMask),
+              (i.staticGw = t.staticGw),
+              (i.staticMtu = t.staticMtu),
+              (i.dhcpMtu = t.dhcpMtu),
+              (i.dnsFlag = !1),
+              (i.dnsMode = t.dnsMode),
+              (i.m_priDns = t.priDns),
+              (i.m_secDns = t.secDns),
+              (i.proto = t.proto),
+              (i.priDns = t.priDns),
+              (i.secDns = t.secDns),
+              (i.clone = t.clone),
+              "0" == t.clone
+                ? (i.cloneMac = t.defaultMac)
+                : (i.cloneMac = t.cloneMac),
+              "0" == t.clone ? (i.macDisabled = !0) : (i.macDisabled = !1),
+              (i.wifi.merge = "1" == t.merge),
+              (i.wifiDualband = t.wifiDualband),
+              (i.wifi.wifiOff = "0" == t.wifiOff),
+              (i.wifi.ssid = t.ssid),
+              (i.wifi.hssid = "1" == t.hssid),
+              (i.ispass = !("0" == t.encryptionWay || !t.key)),
+              (i.wifi.key = t.key),
+              (i.wpa3 = "2" == t.wpaMode),
+              i.wifiState("2g"),
+              "1" == i.wifiDualband &&
+                ((i.wifi.wifiOff5g = "0" == t.wifiOff5g),
+                (i.wifi.ssid5g = t.ssid5g),
+                (i.wifi.hssid5g = "1" == t.hssid5g),
+                (i.wifi.key5g = t.key5g),
+                (i.wpa5g = "2" == t.wpaMode5g),
+                (i.ispass5g = !("0" == t.encryptionWay_5g || !t.key5g)),
+                i.wifiState("5g")),
+              "4g" == globalConfig.modelType
+                ? ((i.strategy = t.wanStrategy),
+                  (i.domain_ip = t.domainName),
+                  (i.ipStatus = t.ipStatus),
+                  (i.moduleType = t.moduleType),
+                  (i.lteCfg.apn = t.apn),
+                  (i.lteCfg.validation = t.validation),
+                  (i.lteCfg.user4g = t.user4g),
+                  (i.lteCfg.pass4g = t.pass4g),
+                  (i.lteCfg.pinCode = t.pinCode),
+                  (i.lteCfg.mode4g = t.mode4g),
+                  (i.lteCfg.dialNum = t.dialNum),
+                  (i.model4g = !1))
+                : ((i.strategy = "2"), (i.model4g = !0)),
+              "1" == t.wifiSchEnabled2g && (i.disabled2g = !0),
+              "1" == t.wifiSchEnabled5g && (i.disabled5g = !0),
+              i.wanChange(1),
+              i.paddingAuto();
+          });
+        },
+        methods: {
+          paddingAuto: function () {
+            "4g" == this.globalConfig.modelType &&
+              ("0" == this.strategy
+                ? (this.paddingValue = "96px")
+                : "2" == this.strategy && (this.paddingValue = "32px"));
+          },
+          wpaChange: function (t) {
+            t && Cstool.Msg({ content: lang_t("wifi.wpa3_info") });
+          },
+          key_state_change: function () {
+            this.key_state ? (this.key_state = !1) : (this.key_state = !0);
+          },
+          key5g_state_change: function () {
+            this.key5g_state
+              ? (this.key5g_state = !1)
+              : (this.key5g_state = !0);
+          },
+          loginpass_state_change: function () {
+            this.loginpass_state
+              ? (this.loginpass_state = !1)
+              : (this.loginpass_state = !0);
+          },
+          wanChange: function (t) {
+            "0" == this.mian_proto
+              ? ((this.dnsMode = "1"),
+                "0" != this.proto &&
+                  ((this.m_priDns = ""), (this.m_secDns = "")),
+                (this.dnsAbled = !0))
+              : (1 != t && (this.dnsMode = "0"),
+                (this.m_priDns = this.priDns),
+                (this.m_secDns = this.secDns),
+                (this.dnsAbled = !1));
+          },
+          clone_change: function () {
+            var i = this;
+            setTimeout(function () {
+              $("#clonemac_pass").blur();
+            }, 100),
+              "1" == i.clone
+                ? uiPost.getStationMacByIp(function (t) {
+                    (i.cloneMac = t.stationMac), (i.macDisabled = !1);
+                  })
+                : ((i.cloneMac = i.defaultMac), (i.macDisabled = !0));
+          },
+          wifiState: function (t) {
+            "2g" == t
+              ? this.wifi.wifiOff
+                ? ((this.hssidclass = !1),
+                  (this.ssidclass = !1),
+                  (this.keyclass = !1))
+                : ((this.ssidclass = !0),
+                  (this.keyclass = !0),
+                  (this.hssidclass = !0))
+              : "5g" == t
+              ? this.wifi.wifiOff5g
+                ? ((this.hssid5gclass = !1),
+                  (this.ssid5gclass = !1),
+                  (this.key5gclass = !1))
+                : ((this.ssid5gclass = !0),
+                  (this.key5gclass = !0),
+                  (this.hssid5gclass = !0))
+              : "define_pass" == t &&
+                "" != this.wifi.key &&
+                (this.definePass
+                  ? (this.loginpass = this.wifi.key)
+                  : (this.loginpass = ""),
+                setTimeout(function () {
+                  $("#login_pass").blur();
+                }, 10));
+          },
+          exit: function () {
+            self.location.href = "./basic/index.html" + get_token_from_url();
+          },
+          next: function (t) {
+            var i = this;
+            1 == t
+              ? (i.menuStep = t)
+              : 2 == t
+              ? Cstool.Verify(this.wanRules, function (t) {
+                  switch (
+                    ((t || "1" == i.strategy) &&
+                      (globalConfig.wizardIptvSupport
+                        ? (i.menuStep = 2)
+                        : (i.menuStep = 3)),
+                    i.mian_proto)
+                  ) {
+                    case "0":
+                      i.wanMode = lang_t("wan.static_ip");
+                      break;
+                    case "1":
+                      i.wanMode = lang_t("wan.dynamic_ip");
+                      break;
+                    case "3":
+                      i.wanMode = lang_t("wan.pppoe");
+                      break;
+                    case "4":
+                      i.wanMode = "PPTP";
+                      break;
+                    case "6":
+                      i.wanMode = "L2TP";
+                  }
+                })
+              : 3 == t
+              ? i.iptvEnabled
+                ? Cstool.Verify(this.iptvRules, function (t) {
+                    if (t) {
+                      if (
+                        !i.tagflag &&
+                        (i.ipPhoneVid != i.iptvVid || i.ipPhonePri != i.iptvPri)
+                      )
+                        return void Cstool.Msg({
+                          content: i.lang_t("iptv.msg4"),
+                        });
+                      if (
+                        i.internetVid == i.ipPhoneVid ||
+                        i.internetVid == i.iptvVid
+                      )
+                        return void Cstool.Msg({
+                          content: i.lang_t("iptv.msg5"),
+                        });
+                      i.menuStep = 3;
+                    }
+                  })
+                : (i.menuStep = 3)
+              : 4 == t
+              ? Cstool.Verify(this.wifiRules, function (t) {
+                  t &&
+                    ((i.menuStep = globalConfig.projectOwnerTw ? 5 : 4),
+                    32 < i.wifi.key.length || "" == i.wifi.key || !i.ispass
+                      ? ((i.hssidclass2g = !0), (i.definePass = !1))
+                      : (i.hssidclass2g = !1));
+                })
+              : 5 == t &&
+                Cstool.Verify(this.loginRules, function (t) {
+                  t && (i.menuStep = 5);
+                });
+          },
+          back: function (t) {
+            globalConfig.wizardIptvSupport || 3 != this.menuStep
+              ? globalConfig.projectOwnerTw && 5 == this.menuStep
+                ? (this.menuStep = 3)
+                : this.menuStep--
+              : (this.menuStep = 1);
+          },
+          discover: function () {
+            var i = this;
+            $("#show_waiting").show(),
+              uiPost.discoverWan({}, function (t) {
+                $("#show_waiting").hide(),
+                  "-1" == t.discoverProto
+                    ? Cstool.Msg({
+                        content: this.lang_t("wan.wan_disconnected"),
+                      })
+                    : (i.mian_proto = t.discoverProto);
+              });
+          },
+          handleSubmit: function (t, i) {
+            var a = this,
+              n = {};
+            "4g" == globalConfig.modelType &&
+              (("0" != a.strategy && "1" != a.strategy) ||
+                ((n = a.lteCfg),
+                "1" != a.strategy && (n.domainName = a.domain_ip)),
+              (n.wanStrategy = a.strategy)),
+              ("0" != a.strategy && "2" != a.strategy) ||
+                ("0" == a.mian_proto
+                  ? ((n.staticIp = a.staticIp),
+                    (n.staticMask = a.staticMask),
+                    (n.staticGw = a.staticGw),
+                    (n.staticMtu = a.staticMtu),
+                    (n.secDns = a.m_secDns))
+                  : "1" == a.mian_proto
+                  ? (n.dhcpMtu = a.dhcpMtu)
+                  : "3" == a.mian_proto
+                  ? ((n.pppoeUser = a.pppoeUser),
+                    (n.pppoePass = a.pppoePass),
+                    (n.pppoeServiceName = a.pppoeServiceName),
+                    (n.pppoeAcName = a.pppoeAcName),
+                    (n.pppoeMtu = a.pppoeMtu))
+                  : "4" == a.mian_proto
+                  ? ((n.pptpMode = a.pptpMode),
+                    (n.pptpIp = a.pptpIp),
+                    (n.pptpMask = a.pptpMask),
+                    (n.pptpGw = a.pptpGw),
+                    99 == cs.ip(a.pptpServer)
+                      ? ((n.pptpDomainFlag = "0"),
+                        (n.pptpServerIp = a.pptpServer))
+                      : ((n.pptpDomainFlag = "1"),
+                        (n.pptpServerDomain = a.pptpServer)),
+                    (n.pptpUser = a.pptpUser),
+                    (n.pptpPass = a.pptpPass),
+                    (n.pptpMtu = a.pptpMtu),
+                    (n.pptpMppe = a.pptpMppe ? "1" : "0"),
+                    (n.pptpMppc = a.pptpMppc ? "1" : "0"))
+                  : "6" == a.mian_proto &&
+                    ((n.l2tpMode = a.l2tpMode),
+                    (n.l2tpIp = a.l2tpIp),
+                    (n.l2tpMask = a.l2tpMask),
+                    (n.l2tpGw = a.l2tpGw),
+                    99 == cs.ip(a.l2tpServer)
+                      ? ((n.l2tpDomainFlag = "0"),
+                        (n.l2tpServerIp = a.l2tpServer))
+                      : ((n.l2tpDomainFlag = "1"),
+                        (n.l2tpServerDomain = a.l2tpServer)),
+                    (n.l2tpUser = a.l2tpUser),
+                    (n.l2tpPass = a.l2tpPass),
+                    (n.l2tpMtu = a.l2tpMtu)),
+                (n.proto = a.mian_proto),
+                "0" == a.mian_proto ||
+                ("4" == a.mian_proto && "1" == a.pptpMode) ||
+                ("6" == a.mian_proto && "1" == a.l2tpMode)
+                  ? ((n.dnsMode = "1"),
+                    (n.priDns = a.m_priDns),
+                    (n.secDns = a.m_secDns))
+                  : (n.dnsMode = "0"),
+                (n.clone = a.clone),
+                (n.cloneMac = a.cloneMac)),
+              globalConfig.wizardIptvSupport &&
+                ((n.iptvEnabled = a.iptvEnabled ? "1" : "0"),
+                (n.tagflag = a.tagflag ? "1" : "0"),
+                (n.iptvVer = String(a.m_iptvVer)),
+                (n.internetPri = a.internetPri),
+                (n.ipPhonePri = a.ipPhonePri),
+                (n.iptvPri = a.iptvPri),
+                (n.lan1 = a.lan1),
+                (n.lan2 = a.lan2),
+                (n.lan3 = a.lan3),
+                (n.lan4 = a.lan4),
+                (n.wlan0 = a.wlan0),
+                (n.wlan1 = a.wlan1),
+                "Indonesia" == globalConfig.softwareType
+                  ? ((n.wlan0_guest = a.wlan0Guest.join(",")),
+                    (n.wlan1_guest = a.wlan1Guest.join(",")))
+                  : ((n.wlan0_guest = a.wlan0_guest),
+                    (n.wlan1_guest = a.wlan1_guest)),
+                (n.internetVid = a.internetVid),
+                (n.ipPhoneVid = a.ipPhoneVid),
+                (n.iptvVid = a.iptvVid)),
+              (n.ssid = a.wifi.ssid),
+              a.ispass
+                ? (globalConfig.wifiWepWpaSupport &&
+                    ((n.encryptionWay = "5"),
+                    (n.encryptionType = "5"),
+                    (n.keyType = "1")),
+                  (n.key = a.wifi.key),
+                  (n.wpaMode = a.wpa3 ? "2" : "1"))
+                : ((n.key = ""), (n.encryptionWay = "0")),
+              (n.wifiOff = a.wifi.wifiOff ? "0" : "1"),
+              (n.hssid = a.wifi.hssid ? "1" : "0"),
+              (n.merge = a.wifi.merge ? "1" : "0"),
+              "0" != a.wifiDualband &&
+                (a.wifi.merge
+                  ? ((n.ssid5g = a.wifi.ssid),
+                    a.ispass
+                      ? ((n.key5g = a.wifi.key),
+                        (n.wpaMode5g = a.wpa3 ? "2" : "1"))
+                      : (n.key5g = ""),
+                    (n.wifiOff5g = a.wifi.wifiOff ? "0" : "1"),
+                    (n.hssid5g = a.wifi.hssid ? "1" : "0"))
+                  : ((n.ssid5g = a.wifi.ssid5g),
+                    a.ispass5g
+                      ? ((n.key5g = a.wifi.key5g),
+                        (n.wpaMode5g = a.wpa5g ? "2" : "1"))
+                      : (n.key5g = ""),
+                    (n.wifiOff5g = a.wifi.wifiOff5g ? "0" : "1"),
+                    (n.hssid5g = a.wifi.hssid5g ? "1" : "0")),
+                globalConfig.wifiWepWpaSupport &&
+                  (n.key5g
+                    ? ((n.encryptionWay_5g = "5"),
+                      (n.encryptionType_5g = "5"),
+                      (n.keyType_5g = "1"))
+                    : (n.encryptionWay_5g = "0"))),
+              (n.tz = a.tz),
+              (n.loginpass = a.loginpass),
+              (n.step_index = String(a.menuStep)),
+              (n.wizard = "1"),
+              console.log(n),
+              uiPost.setWizardCfg(n, function (t) {
+                var i = "";
+                i =
+                  null != t.wtime && "" != t.wtime && 0 != t.wtime
+                    ? Number(t.wtime)
+                    : 240;
+                location.host;
+                Cstool.Count(i, "", function () {
+                  "admin" == a.loginpass ||
+                    uiPost.logout(n, function (t) {
+                      setTimeout(function () {}, 500);
+                    });
+                });
+              });
+          },
+          change_mode: function () {
+            var t = this;
+            "3" == this.m_iptvVer
+              ? ((this.internetVid = "621"),
+                (this.internetPri = "0"),
+                (this.iptvVid = "823"),
+                (this.iptvPri = "0"),
+                (this.ipPhoneVid = "822"),
+                (this.ipPhonePri = "0"),
+                (this.lan1 = "1"),
+                (this.lan2 = "2"),
+                (this.lan3 = "3"),
+                (this.lan4 = "2"),
+                (this.wlan0 = "3"),
+                (this.wlan0_guest = "3"),
+                (this.wlan1 = "3"),
+                (this.wlan1_guest = "3"),
+                (this.tagflag = !0),
+                (this.show_internet_vid = !0),
+                (this.show_ipphone_vid = !0),
+                (this.show_iptv_vid = !0))
+              : "2" == this.m_iptvVer
+              ? ((this.internetVid = "500"),
+                (this.internetPri = "0"),
+                (this.iptvVid = "600"),
+                (this.iptvPri = "0"),
+                (this.ipPhoneVid = "400"),
+                (this.ipPhonePri = "0"),
+                (this.lan1 = "1"),
+                (this.lan2 = "2"),
+                (this.lan3 = "3"),
+                (this.lan4 = "3"),
+                (this.wlan0 = "3"),
+                (this.wlan0_guest = "3"),
+                (this.wlan1 = "3"),
+                (this.wlan1_guest = "3"),
+                (this.tagflag = !0),
+                (this.show_internet_vid = !0),
+                (this.show_ipphone_vid = !0),
+                (this.show_iptv_vid = !0))
+              : "6" == this.m_iptvVer
+              ? ((this.internetVid = "11"),
+                (this.internetPri = "0"),
+                (this.iptvVid = "17"),
+                (this.iptvPri = "0"),
+                (this.ipPhoneVid = "14"),
+                (this.ipPhonePri = "0"),
+                (this.lan1 = "1"),
+                (this.lan2 = "2"),
+                (this.lan3 = "3"),
+                (this.lan4 = "2"),
+                (this.wlan0 = "3"),
+                (this.wlan0_guest = "3"),
+                (this.wlan1 = "3"),
+                (this.wlan1_guest = "3"),
+                (this.tagflag = !0),
+                (this.show_internet_vid = !0),
+                (this.show_ipphone_vid = !0),
+                (this.show_iptv_vid = !0))
+              : "7" == this.m_iptvVer
+              ? ((this.internetVid = "101"),
+                (this.internetPri = "0"),
+                (this.iptvVid = "2"),
+                (this.iptvPri = "0"),
+                (this.ipPhoneVid = "201"),
+                (this.ipPhonePri = "0"),
+                (this.lan1 = "3"),
+                (this.lan2 = "2"),
+                (this.lan3 = "3"),
+                (this.lan4 = "2"),
+                (this.wlan0 = "3"),
+                (this.wlan0_guest = "3"),
+                (this.wlan1 = "3"),
+                (this.wlan1_guest = "3"),
+                (this.tagflag = !0),
+                (this.show_internet_vid = !0),
+                (this.show_ipphone_vid = !0),
+                (this.show_iptv_vid = !1))
+              : "1" == this.m_iptvVer
+              ? ((this.internetVid = "10"),
+                (this.internetPri = "0"),
+                (this.iptvVid = "20"),
+                (this.iptvPri = "4"),
+                (this.ipPhoneVid = "30"),
+                (this.ipPhonePri = "0"),
+                (this.lan1 = "1"),
+                (this.lan2 = "3"),
+                (this.lan3 = "3"),
+                (this.lan4 = "3"),
+                (this.wlan0 = "3"),
+                (this.wlan0_guest = "3"),
+                (this.wlan1 = "3"),
+                (this.wlan1_guest = "3"),
+                (this.tagflag = !0),
+                (this.show_internet_vid = !0),
+                (this.show_ipphone_vid = !1),
+                (this.show_iptv_vid = !0))
+              : "4" == this.m_iptvVer
+              ? ((this.internetVid = "35"),
+                (this.internetPri = "0"),
+                (this.iptvVid = "36"),
+                (this.iptvPri = "4"),
+                (this.ipPhoneVid = "37"),
+                (this.ipPhonePri = "5"),
+                (this.lan1 = "1"),
+                (this.lan2 = "3"),
+                (this.lan3 = "2"),
+                (this.lan4 = "3"),
+                (this.wlan0 = "3"),
+                (this.wlan0_guest = "3"),
+                (this.wlan1 = "3"),
+                (this.wlan1_guest = "3"),
+                (this.tagflag = !0),
+                (this.show_internet_vid = !0),
+                (this.show_ipphone_vid = !0),
+                (this.show_iptv_vid = !0))
+              : "5" == this.m_iptvVer
+              ? ((this.internetVid = "1"),
+                (this.internetPri = "0"),
+                (this.iptvVid = "2"),
+                (this.iptvPri = "0"),
+                (this.ipPhoneVid = "2"),
+                (this.ipPhonePri = "0"),
+                (this.lan1 = "1"),
+                (this.lan2 = "3"),
+                (this.lan3 = "3"),
+                (this.lan4 = "3"),
+                (this.wlan0 = "3"),
+                (this.wlan0_guest = "3"),
+                (this.wlan1 = "3"),
+                (this.wlan1_guest = "3"),
+                (this.tagflag = !1),
+                (this.show_internet_vid = !1),
+                (this.show_ipphone_vid = !1),
+                (this.show_iptv_vid = !1))
+              : ((this.internetVid = t.initdata.internetVid),
+                (this.internetPri = t.initdata.internetPri),
+                (this.iptvVid = t.initdata.iptvVid),
+                (this.iptvPri = t.initdata.iptvPri),
+                (this.ipPhoneVid = t.initdata.ipPhoneVid),
+                (this.ipPhonePri = t.initdata.ipPhonePri),
+                (this.lan1 = t.initdata.lan1),
+                (this.lan2 = t.initdata.lan2),
+                (this.lan3 = t.initdata.lan3),
+                (this.lan4 = t.initdata.lan4),
+                (this.wlan0 = t.initdata.wlan0),
+                (this.wlan0_guest = t.initdata.wlan0_guest),
+                (this.wlan1 = t.initdata.wlan1),
+                (this.wlan1_guest = t.initdata.wlan1_guest),
+                (this.tagflag = "1" == t.initdata.tagFlag),
+                "Indonesia" == globalConfig.softwareType &&
+                  ((t.wlan0Guest = t.initdata.wlan0_guest.split(",")),
+                  (t.wlan1Guest = t.initdata.wlan1_guest.split(","))),
+                (this.show_internet_vid = !0),
+                (this.show_ipphone_vid = !0),
+                (this.show_iptv_vid = !0)),
+              0 == this.m_iptvVer
+                ? ((this.edit_disable = !1), (this.tag_class = !1))
+                : ((this.edit_disable = !0),
+                  (this.tag_class = !0),
+                  "Indonesia" == globalConfig.softwareType &&
+                    ((t.wlan0Guest = ["3", "3", "3", "3"]),
+                    (t.wlan1Guest = ["3", "3", "3", "3"])));
+          },
+        },
+      };
+    </script>
+    <script src="/static/js/main.js"></script>
+  </body>
+</html>

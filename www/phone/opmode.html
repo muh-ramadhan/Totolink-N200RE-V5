@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="proma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no cache" />
+    <meta http-equiv="expires" content="0" />
+    <meta
+      content="width=device-width,initial-scale=1,user-scalable=no"
+      name="viewport"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1"
+    />
+    <link rel="stylesheet" href="/static/css/phone/style.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="text/x-template" id="main">
+      <div>
+        <div class="toper">
+      	<phone-back type="custom" :title="lang_t('menu.opmode')" @on-click="backFun"></phone-back>
+        </div>
+      <div v-show="(!modeShow && !isEdit)||pageIdx!=1" >
+        <white-header :title="opTitle" style="width:50%;"></white-header>
+      </div>
+        <div v-show="pageIdx!=1" style="margin-top:70px;margin-left:6%;font-weight:bold;">{{ setTitle }}</div>
+        <div v-show="pageIdx==1">
+          <div v-show="modeShow">
+      	  <div class="mode">
+      		<div style="width:100%;border-bottom:2px #eee solid;min-height:60px;" v-for="mode in opmodeMenu" @click="modeFun(mode.name)" >
+      		  <img style="float:left;padding:10px 30px 10px 40px;width:40px;" :src="mode.src":title="lang_t('opmode.'+mode.name)" :class="[mode.class]">
+      		  <span style="float:left;padding-top:20px;font-size: 16px;">{{ lang_t('opmode.'+mode.name) }}</span>
+                <img style="float:right;padding-top:25px;padding-right:50px;" src="/static/images/phone/sign_right.png">
+      		</div>
+      	  </div>
+          </div>
+          <div v-show="!modeShow && !isEdit" style="margin-top:70px;">
+      	  <div class="content-list" :style="{height: listHeight,'overflow-y':'auto'}">
+      		<table class="t_table3" style="width: 100%;">
+      			<thead>
+      				<tr>
+      				<th style="width: 10%;">{{ lang_t('index.channel') }}</th>
+      				<th style="width: 40%;word-wrap:break-word;word-break:break-all;">{{ lang_t('index.ssid') }}</th>
+      				<th style="width: 30%;word-wrap:break-word;word-break:break-all;">{{ lang_t('index.mac') }}</th>
+      				<th style="width: 20%;">{{ lang_t('wifi.encryption') }}</th>
+      				</tr>
+      			</thead>
+      			<tbody>
+      				<tr v-for="(list,v) in apScanList" @click="editFun(list)" v-if="dataTotal>0" style="font-size: 12px;">
+      					<td>
+      						<span>[{{ list.channel }}]</span>
+      					</td>
+      					<td>
+      						<span style="word-wrap:break-word;word-break:break-all;">{{ list.ssid }}</span>
+      					</td>
+      					<td>
+      						<span style="word-wrap:break-word;word-break:break-all;">{{ list.bssid }}</span>
+      					</td>
+      					<td>
+      						<img :src="encryptImg(list.encrypt)">
+      					</td>
+      				</tr>
+      			</tbody>
+      			<div v-if="scanFlag" align="center" style="padding-top:100px;">
+      				<img src="/static/images/load.gif">
+      			</div>
+      		</table>
+      	  </div>
+      	</div>
+      	<div v-show="isEdit">
+      	  <div class="content">
+      	    <div class="group">
+      		  <div class="item-l">{{ lang_t('wifi.ssid') }}</div>
+      		  <div class="item-r">
+      		    <input type="text" v-model="ssid" maxlength="32" readonly="readonly">
+      		  </div>
+      	    </div>
+      	    <div class="group" v-show="passDisable">
+      		  <div class="item-l">{{ lang_t('wifi.pass') }}</div>
+      		  <div class="item-r">
+      		    <input type="text" v-model="pass" maxlength="64">
+      		  </div>
+      		</div>
+      	  </div>
+      	</div>
+      	<div class="space" v-if="!isEdit"></div>
+      	<div class="footer" v-show="!modeShow">
+      	  <button class="btn" @click="scanFun" v-if="!isEdit">{{ lang_t('common.scan') }}</button>
+      	  <button class="btn btn-gray" @click="scanFun" v-if="isEdit" style="width:45%;">{{ lang_t('common.back') }}</button>
+      	  <button class="btn" @click="pageFun(1)" v-if="isEdit" style="width:45%;margin-left:10%;">{{ lang_t('common.next') }}</button>
+      	</div>
+      	<div class="space"></div>
+        </div>
+        <div v-show="pageIdx==2">
+      	<div class="content">
+      	  <div class="group">
+      		<div class="item-l">{{ lang_t('wan.proto') }}</div>
+      		<div class="item-r">
+      		  <select v-model="proto" @change="wan_change">
+      			<option value="0" v-if="globalConfig.wanTypeList_STATIC">{{ lang_t('wan.static_ip') }}</option>
+      			<option value="1" v-if="globalConfig.wanTypeList_DHCP">{{ lang_t('wan.dynamic_ip') }}</option>
+      			<option value="3" v-if="globalConfig.wanTypeList_PPPOE">{{ lang_t('wan.pppoe') }}</option>
+      			<option value="4" v-if="globalConfig.wanTypeList_PPTP && currentMode != 'wisp'">PPTP</option>
+      			<option value="6" v-if="globalConfig.wanTypeList_L2TP && currentMode != 'wisp'">L2TP</option>
+      		  </select>
+      		</div>
+      	  </div>
+      	  <div v-show="proto=='0'">
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.ip') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.staticIp" :maxlength="15">
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.mask') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.staticMask" :maxlength="15">
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.gateway') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.staticGw" :maxlength="15">
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">MTU</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.staticMtu" :maxlength="4">
+      		  </div>
+      	    </div>
+      	  </div>
+      	  <div v-show="proto == '1'">
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.hostname') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.hostName" maxlength="32">
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">MTU</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.dhcpMtu" maxlength="4">
+      		  </div>
+      		</div>
+      	  </div>
+      	  <div v-show="proto == '3'">
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.user') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.pppoeUser" maxlength="32">
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.pass') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.pppoePass" v-pass maxlength="32">
+      		  </div>
+      		</div>
+      		<div class="group" v-if="globalConfig.pppoeSpecSupport">
+      		  <div class="item-l">{{ lang_t('wan.spec') }}</div>
+      		  <div class="item-r">
+      			<select v-model="wan.pppoeSpecType">
+      			  <option value="0">{{ lang_t('wan.none') }}</option>
+      			  <option value="1">{{ lang_t('wan.spec') }} 1</option>
+      			  <option value="2">{{ lang_t('wan.spec') }} 2</option>
+      			  <option value="3">{{ lang_t('wan.spec') }} 3</option>
+      			</select>
+      		  </div>
+      		</div>
+      		<div v-if="globalConfig.pppoeRussiaSupport">
+      		  <div class="group">
+      			<div class="item-l">{{ lang_t('wan.server_name') }}</div>
+      			<div class="item-r">
+      			  <input type="text" v-model="wan.pppoeServiceName" maxlength="32">
+      			</div>
+      		  </div>
+      		  <div class="group">
+      			<div class="item-l">{{ lang_t('wan.ac_name') }}</div>
+      			<div class="item-r">
+      			  <input type="text" v-model="wan.pppoeAcName" maxlength="32">
+      			</div>
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">MTU</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.pppoeMtu" maxlength="4">
+      		  </div>
+      		</div>
+      	  </div>
+      	  <div v-show="proto == '4'">
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.address_mode') }}</div>
+      		  <div class="item-r">
+      			<select v-model="wan.pptpMode" @change="wan_change">
+      			  <option value="0">{{ lang_t('wan.dynamic') }}</option>
+      			  <option value="1">{{ lang_t('wan.static') }}</option>
+      			</select>
+      		  </div>
+      		</div>
+      		<div v-show="wan.pptpMode == '1'">
+      		  <div class="group">
+      			<div class="item-l">{{ lang_t('wan.ip') }}</div>
+      			<div class="item-r">
+      		      <input type="text" v-model="wan.pptpIp" maxlength="15">
+      			</div>
+      		  </div>
+      		  <div class="group">
+      			<div class="item-l">{{ lang_t('wan.mask') }}</div>
+      			<div class="item-r">
+      			  <input type="text" v-model="wan.pptpMask" maxlength="15">
+      			</div>
+      		  </div>
+      		  <div class="group">
+      			<div class="item-l">{{ lang_t('wan.gateway') }}</div>
+      			<div class="item-r">
+      			  <input type="text" v-model="wan.pptpGw" maxlength="15">
+      			</div>
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.server_address') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.pptpServer" maxlength="32">
+      		  </div>
+      		</div>
+      		<div class="group">
+      	      <div class="item-l">{{ lang_t('wan.user') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.pptpUser" maxlength="32">
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.pass') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.pptpPass" v-pass maxlength="32">
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">MTU</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.pptpMtu" maxlength="4">
+      		  </div>
+      		</div>
+      	  </div>
+      	  <div v-show="proto == '6'">
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.address_mode') }}</div>
+      		  <div class="item-r">
+      			<select v-model="wan.l2tpMode" @change="wan_change">
+      			  <option value="0">{{ lang_t('wan.dynamic') }}</option>
+      			  <option value="1">{{ lang_t('wan.static') }}</option>
+      			</select>
+      		  </div>
+      		</div>
+      		<div v-show="wan.l2tpMode == '1'">
+      		  <div class="group">
+      			<div class="item-l">{{ lang_t('wan.ip') }}</div>
+      			<div class="item-r">
+      			  <input type="text" v-model="wan.l2tpIp" maxlength="15">
+      			</div>
+      		  </div>
+      		  <div class="group">
+      			<div class="item-l">{{ lang_t('wan.mask') }}</div>
+      			<div class="item-r">
+      			  <input type="text" v-model="wan.l2tpMask" maxlength="15">
+      			</div>
+      		  </div>
+      		  <div class="group">
+      			<div class="item-l">{{ lang_t('wan.gateway') }}</div>
+      			<div class="item-r">
+      			  <input type="text" v-model="wan.l2tpGw" maxlength="15">
+      			</div>
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.server_address') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.l2tpServer" maxlength="32">
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.user') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.l2tpUser" maxlength="32">
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.pass') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.l2tpPass" v-pass maxlength="32">
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">MTU</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.l2tpMtu" maxlength="4">
+      		  </div>
+      		</div>
+      	  </div>
+      	  <div class="group" v-show="!dnsAbled">
+      		<div class="item-l">{{ lang_t('wan.dns_set') }}</div>
+      		<div class="item-r">
+      		  <select v-model="wan.dnsMode">
+      			<option value="0">{{ lang_t('wan.auto_dns') }}</option>
+      			<option value="1">{{ lang_t('wan.manual_dns') }}</option>
+      			<option value="2" v-if="globalConfig.modelType != '4g'">{{ lang_t('wan.dns_penetrate') }}</option>
+      		  </select>
+      		</div>
+      	  </div>
+      	  <div v-show="wan.dnsMode=='1'">
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.pri_dns') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.priDns" maxlength="15">
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wan.sec_dns') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wan.secDns" maxlength="15">
+      		  </div>
+      		</div>
+      	  </div>
+      	  <div class="group">
+      		<div class="item-l">MAC{{ lang_t('wan.set') }}</div>
+      		<div class="item-r">
+      		  <select v-model="wan.clone" @change="clone_change">
+      			<option value="0">{{ lang_t('wan.default') }}</option>
+      			<option value="1">{{ lang_t('wan.clone') }}</option>
+      		  </select>
+      		</div>
+      	  </div>
+      	  <div class="group">
+      		<div class="item-l">{{ lang_t('wan.mac') }}</div>
+      		<div class="item-r">
+      		  <input type="text" v-model="wan.cloneMac" maxlength="17" :disabled="macDisabled">
+      		</div>
+      	  </div>
+      	</div>
+        </div>
+        <div v-show="pageIdx==3||pageIdx==4">
+      	<div class="content">
+      	  <div class="group">
+      		<div class="item-sw"><b>{{ lang_t('wifi.state') }}</b></div>
+      		<div class="item-r">
+      		  <x-switch v-model="wifi.wifiOff" :disabled="wifiStateAbled"></x-switch>
+      		</div>
+      	  </div>
+      	  <div v-show="wifi.wifiOff">
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wifi.ssid') }}</div>
+      		  <div class="item-r">
+      			<input type="text" v-model="wifi.ssid" maxlength="32">
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-sw">{{ lang_t('wifi.pass_state') }}</div>
+      		  <div class="item-r">
+      			<x-switch v-model="wifi.ispass"></x-switch>
+      		  </div>
+      		</div>
+      		<div class="group" v-show="wifi.ispass">
+      		  <div class="item-l">{{ lang_t('wifi.pass') }}</div>
+      		  <div class="item-r">
+      			<input type="password" v-model="wifi.key" maxlength="63" v-pass />
+      		  </div>
+      		</div>
+      		<div class="group">
+      		  <div class="item-l">{{ lang_t('wifi.hide_ssid') }}</div>
+      		  <div class="item-r">
+      			<div style="float:right;margin:-20% -45% 0 0;">
+      			  <x-checkbox v-model="wifi.hssid"></x-checkbox>
+      			</div>
+      		  </div>
+      	    </div>
+      		<div class="group" v-if="globalConfig.wifiWpa2Wpa3Support">
+      		  <div class="item-l">{{ lang_t('wifi.wpa3') }}</div>
+      		  <div class="item-r">
+      			<div style="float:right;margin:-20% -45% 0 0;">
+      			  <x-checkbox v-model="wifi.wpaMode" @change="wpaChange"></x-checkbox>
+      			</div>
+      		  </div>
+      	    </div>
+      	  </div>
+      	</div>
+        </div>
+        <div class="footer" v-show="pageIdx!=1">
+      	<button class="btn btn-gray" @click="pageFun(-1)" style="width:45%;">{{ lang_t('common.back') }}</button>
+      	<button class="btn" @click="pageFun(1)" :disabled="btnDisabled" style="width:45%;margin-left:10%;">{{ pageIdx==4?lang_t('common.finish'):lang_t('common.next') }}</button>
+        </div>
+      </div>
+    </script>
+    <script src="/plugin/vue.js"></script>
+    <script src="/plugin/jquery-3.2.1.min.js"></script>
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/phone_layout.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/topicurl.js"></script>
+    <script>
+      var cs_main = {
+        template: "#main",
+        data: function () {
+          return {
+            globalConfig: globalConfig,
+            lang: $.lang,
+            lang_t: lang_t,
+            listHeight: "300px",
+            opmode: "",
+            currentMode: "gw",
+            modeShow: !0,
+            apScanList: [],
+            dataTotal: 0,
+            data: [],
+            padValue: "",
+            opmodeArr: [],
+            isEdit: !1,
+            ssid: "",
+            pass: "",
+            passDisable: !1,
+            tempData: {},
+            scanFlag: !1,
+            pageIdx: 1,
+            wifi: {
+              ssid: "",
+              key: "",
+              channel: "0",
+              band: "",
+              bw: "",
+              countryCode: "",
+              ispass: !1,
+              hssid: !1,
+              wifiOff: !1,
+              wpaMode: !1,
+              encryptionWay: "",
+            },
+            wifiDualband: !1,
+            wifiStateAbled: !1,
+            wifi2: {},
+            wifi5: {},
+            codeList: "",
+            proto: "1",
+            lanIp: "",
+            dnsAbled: !0,
+            macDisabled: !1,
+            wan: {
+              defaultMac: "",
+              pppoeUser: "",
+              pppoePass: "",
+              pppoeSpecType: "0",
+              pppoeServiceName: "",
+              pppoeAcName: "",
+              pppoeMtu: "",
+              pptpMode: "",
+              pptpIp: "",
+              pptpMask: "",
+              pptpGw: "",
+              pptpServer: "",
+              pptpUser: "",
+              pptpPass: "",
+              pptpMtu: "",
+              pptpMppe: "",
+              pptpMppc: "",
+              l2tpMode: "",
+              l2tpServer: "",
+              l2tpIp: "",
+              l2tpMask: "",
+              l2tpGw: "",
+              l2tpUser: "",
+              l2tpPass: "",
+              l2tpMtu: "",
+              staticIp: "",
+              staticMask: "",
+              staticGw: "",
+              staticMtu: "",
+              hostName: "",
+              dhcpMtu: "",
+              dnsMode: "0",
+              priDns: "",
+              secDns: "",
+              ttlWay: !1,
+              clone: "",
+              cloneMac: "",
+            },
+            btnDisabled: !1,
+          };
+        },
+        computed: {
+          opmodeMenu: function () {
+            var t = (temp = tempArr = []);
+            temp = this.opmodeArr;
+            var i = this.currentMode;
+            for (var n in temp)
+              (t[n] = {}),
+                (t[n].name = temp[n]),
+                (t[n].src = "/static/images/opmode/" + temp[n] + "_on.png"),
+                i == temp[n] ? (t[n].class = "") : (t[n].class = "img-invert");
+            return t;
+          },
+          setTitle: function () {
+            return 1 == this.pageIdx
+              ? this.lang_t("menu.opmode")
+              : 2 == this.pageIdx
+              ? this.lang_t("menu.settings")
+              : 3 == this.pageIdx
+              ? "5GHz " + this.lang_t("menu.wifi")
+              : 4 == this.pageIdx
+              ? "2.4GHz " + this.lang_t("menu.wifi")
+              : "";
+          },
+          vpnModeName: function () {
+            return ["wan.dynamic", "wan.static"];
+          },
+          imgSel: function () {
+            return "/static/images/opmode/" + this.currentMode + "_on.png";
+          },
+          opTitle: function () {
+            return this.lang_t("opmode." + this.currentMode);
+          },
+        },
+        created: function () {
+          var i = this;
+          (i.listHeight = 0.7 * window.innerHeight + "px"),
+            $.extend(this.wifi5, this.wifi),
+            $.extend(this.wifi2, this.wifi),
+            uiPost.getOpModeCfg(function (t) {
+              (i.tempWifiState = t.wifiOff),
+                (i.tempWifiState_5g = t.wifiOff_5g),
+                (i.lanIp = t.lanIp),
+                (i.opmode = t.opmode),
+                (i.currentMode = t.opmode),
+                (i.opmodeArr = t.OpModeSupport.split(";")),
+                (i.codeList = t.countryCodeList),
+                on_extend(i.wifi2, t),
+                "1" == t.wifiDualband
+                  ? ((i.wifiDualband = !0),
+                    on_extend(i.wifi5, t, "_5g"),
+                    $.extend(i.wifi, i.wifi5),
+                    i.dataType(i.wifi5))
+                  : $.extend(i.wifi, i.wifi2),
+                i.dataType(i.wifi),
+                i.dataType(i.wifi2),
+                on_extend(i.wan, t),
+                (i.proto = t.proto),
+                "0" == t.pptpDomainFlag
+                  ? (i.wan.pptpServer = t.pptpServerIp)
+                  : (i.wan.pptpServer = t.pptpServerDomain),
+                "0" == t.l2tpDomainFlag
+                  ? (i.wan.l2tpServer = t.l2tpServerIp)
+                  : (i.wan.l2tpServer = t.l2tpServerDomain),
+                (i.wan.ttlWay = "1" == t.ttlWay),
+                "0" == t.clone &&
+                  ((i.macDisabled = !0), (i.wan.cloneMac = t.defaultMac)),
+                i.wan_change("init");
+            });
+        },
+        watch: {
+          pageIdx: function (t) {
+            if (
+              ((this.wifiStateAbled = !1),
+              "rpt" == this.currentMode || "wisp" == this.currentMode)
+            ) {
+              var i = this.tempData.channel;
+              ((3 == t && 15 <= i) || (4 == t && i <= 15)) &&
+                ((this.wifiStateAbled = !0), (this.wifi.wifiOff = !0));
+            }
+            2 != t ||
+              ("gw" != this.currentMode && "wisp" != this.currentMode) ||
+              ((this.proto = "1"), this.wan_change());
+          },
+        },
+        mounted: function () {
+          var t = window.innerHeight / 2.07;
+          $(".main-pad").css("height", t + "px");
+        },
+        methods: {
+          backFun: function () {
+            this.isEdit
+              ? (this.isEdit = !1)
+              : this.modeShow
+              ? (location.href = "/phone/home.html" + get_token_from_url())
+              : (this.modeShow = !0);
+          },
+          wpaChange: function (t) {
+            t &&
+              Cstool.Mark({
+                content: lang_t("wifi.wpa3_info"),
+                l_text: lang_t("common.ok"),
+              });
+          },
+          pageFun: function (t) {
+            var i = this;
+            if (1 == t) {
+              if (1 == this.pageIdx) {
+                if (this.passDisable) {
+                  var n = cs.string(this.pass);
+                  if (0 == n)
+                    return void this.error(
+                      this.lang_t("wifi.pass") + this.lang_t("wan.msg1")
+                    );
+                  if (1 == n) return void this.error(this.lang_t("wifi.msg5"));
+                  if (this.pass.length < 8 || 63 < this.pass.length)
+                    return void this.error(this.lang_t("wifi.msg4"));
+                }
+                return (
+                  "gw" == i.currentMode || "wisp" == i.currentMode
+                    ? (i.pageIdx += t)
+                    : i.wifiDualband
+                    ? (i.pageIdx = 3)
+                    : ($.extend(i.wifi, i.wifi2), (i.pageIdx = 4)),
+                  (i.modeShow = !0),
+                  void (i.isEdit = !1)
+                );
+              }
+              if (2 == this.pageIdx) {
+                if (0 === this.wanVerify()) return;
+                return void (i.wifiDualband
+                  ? (i.pageIdx += t)
+                  : (i.pageIdx = 4));
+              }
+              if (3 == this.pageIdx) {
+                if (0 === this.wifiVerify(this.wifi.ssid, this.wifi.key))
+                  return;
+                return (
+                  $.extend(i.wifi5, i.wifi),
+                  $.extend(i.wifi, i.wifi2),
+                  void (i.pageIdx += t)
+                );
+              }
+              if (4 == this.pageIdx) {
+                if (0 === this.wifiVerify(this.wifi.ssid, this.wifi.key))
+                  return;
+                return on_extend(i.wifi2, i.wifi), void i.applyFun();
+              }
+            }
+            -1 == t && 4 == this.pageIdx && $.extend(this.wifi2, this.wifi),
+              (this.pageIdx += t),
+              -1 == t &&
+                (2 == this.pageIdx
+                  ? "gw" != i.currentMode &&
+                    "wisp" != i.currentMode &&
+                    (this.pageIdx = 1)
+                  : 3 == this.pageIdx &&
+                    (this.wifiDualband
+                      ? $.extend(this.wifi, this.wifi5)
+                      : this.pageFun(-1))),
+              1 == this.pageIdx && (this.currentMode = this.opmode);
+          },
+          dataType: function (t, i) {
+            "set" == i
+              ? ((t.wifiOff = t.wifiOff ? "0" : "1"),
+                (t.hssid = t.hssid ? "1" : "0"),
+                (t.wpaMode = t.wpaMode ? "2" : "1"))
+              : ((t.wifiOff = "1" != t.wifiOff),
+                (t.hssid = "1" == t.hssid),
+                (t.wpaMode = "2" == t.wpaMode),
+                (t.ispass = !("0" == t.encryptionWay || !t.key)));
+          },
+          modeFun: function (t) {
+            var i = this;
+            if ("rpt" == t || "wisp" == t)
+              "0" == this.tempWifiState ||
+              ("0" == this.tempWifiState_5g && this.wifiDualband)
+                ? ((this.currentMode = t), (this.modeShow = !1), this.scanFun())
+                : Cstool.Mark({
+                    content: this.lang_t("opmode.on_wifi"),
+                    l_text: lang_t("common.ok"),
+                  });
+            else {
+              if (this.opmode == t) return;
+              Cstool.Mark({
+                content: this.lang_t("common.msg1", [
+                  this.lang_t("opmode." + t) + ("br" === t ? "(AP)" : ""),
+                ]),
+                ok: function () {
+                  (i.currentMode = t), i.pageFun(1);
+                },
+              });
+            }
+          },
+          encryptImg: function (t) {
+            var i = "/static/images/phone/lock.png";
+            return ("NONE" != t && "OPEN" != t) || (i = ""), i;
+          },
+          signalImg: function (t) {
+            var i = "/static/images/signal_weak.png";
+            return (
+              40 <= (t = Number(t)) && t < 80
+                ? (i = "/static/images/signal_medium.png")
+                : 80 <= t && (i = "/static/images/signal_good.png"),
+              i
+            );
+          },
+          countryChange: function () {
+            this.wifi.channel = "0";
+          },
+          autoChange: function (t, i) {
+            if (
+              ("2.4" != i &&
+                (cs.isInArray(this.channel5gOption, this.wifi.channel) ||
+                  (this.wifi.channel = "0")),
+              "band" == t)
+            )
+              if ("2.4" == i)
+                ("1" != this.wifi.band && "4" != this.wifi.band) ||
+                  (this.wifi.bw = "1");
+              else {
+                var n = !1;
+                for (var a in this.bw5gOption)
+                  if (this.bw5gOption[a].value == this.wifi.bw) {
+                    n = !0;
+                    break;
+                  }
+                n || (this.wifi.bw = "0");
+              }
+          },
+          editFun: function (t) {
+            (this.ssid = t.ssid),
+              "NONE" == (this.tempData = t).encrypt || "OPEN" == t.encrypt
+                ? (this.passDisable = !1)
+                : (this.passDisable = !0),
+              (this.isEdit = !0),
+              $(document).scrollTop(10);
+          },
+          closeFun: function () {
+            (this.modeShow = !0), (this.isEdit = !1), (this.apScanList = []);
+          },
+          applyFun: function () {
+            var t,
+              i,
+              n = {};
+            if ("gw" == this.currentMode || "wisp" == this.currentMode)
+              for (t in ((n.proto = this.proto), this.wan))
+                (i = this.wan[t]),
+                  "ttlWay" == t && (i = i ? "1" : "0"),
+                  "pptpServer" != t
+                    ? "l2tpServer" != t
+                      ? (n[t] = i)
+                      : 99 == cs.ip(i)
+                      ? ((n.l2tpDomainFlag = "0"), (n.l2tpServerIp = i))
+                      : ((n.l2tpDomainFlag = "1"), (n.l2tpServerDomain = i))
+                    : 99 == cs.ip(i)
+                    ? ((n.pptpDomainFlag = "0"), (n.pptpServerIp = i))
+                    : ((n.pptpDomainFlag = "1"), (n.pptpServerDomain = i));
+            for (t in (this.dataType(this.wifi2, "set"), this.wifi2))
+              "ispass" != t && "encryptionWay" != t && (n[t] = this.wifi2[t]);
+            if (
+              (this.wifi2.ispass || (n.key = ""),
+              globalConfig.wifiWepWpaSupport &&
+                (n.key
+                  ? ((n.encryptionWay = "4"),
+                    (n.encryptionType = "4"),
+                    (n.keyType = "1"))
+                  : (n.encryptionWay = "0")),
+              this.wifiDualband)
+            ) {
+              for (t in (this.dataType(this.wifi5, "set"), this.wifi5))
+                "ispass" != t &&
+                  "encryptionWay" != t &&
+                  (n[t + "_5g"] = this.wifi5[t]);
+              this.wifi5.ispass || (n.key_5g = ""),
+                globalConfig.wifiWepWpaSupport &&
+                  (n.key_5g
+                    ? ((n.encryptionWay_5g = "4"),
+                      (n.encryptionType_5g = "4"),
+                      (n.keyType_5g = "1"))
+                    : (n.encryptionWay_5g = "0"));
+            }
+            if (
+              ((n.opmode = this.currentMode),
+              "wisp" == this.currentMode || "rpt" == this.currentMode)
+            ) {
+              for (t in this.tempData) n[t + "_rpt"] = this.tempData[t];
+              "NONE" != this.tempData.encrypt &&
+                "OPEN" != this.tempData.encrypt &&
+                (n.password_rpt = this.pass);
+            }
+            (this.btnDisabled = !0),
+              uiPost.setOpModeCfg(n, function (t) {
+                var i = 30;
+                t.wtime && (i = t.wtime),
+                  Cstool.Mark({
+                    type: "load",
+                    content: this.lang_t("common.effective"),
+                    time: i,
+                    success: function () {
+                      location.href = "home.html" + get_token_from_url();
+                    },
+                  });
+              });
+          },
+          scanFun: function () {
+            var i = this;
+            this.isEdit
+              ? (this.isEdit = !1)
+              : ((i.scanFlag = !0),
+                (this.apScanList = []),
+                uiPost.getWiFiApcliScan(function (t) {
+                  (i.apScanList = t),
+                    (i.data = t),
+                    (i.scanFlag = !1),
+                    (i.dataTotal = t.length),
+                    i.sinalSort("refre");
+                }));
+          },
+          sinalSort: function (t) {
+            var a = this;
+            if (!a.wifiDualband) {
+              var i = a.countryCode,
+                n = 13,
+                s = 0,
+                e = [];
+              ("US" !== i && "TN" !== i && "TW" !== i) || (n = 11);
+              for (var r = 0; r <= a.apScanList.length - 1; r++)
+                n >= a.apScanList[r].channel && ((e[s] = a.apScanList[r]), s++);
+              a.apScanList = e;
+            }
+            var p = a.apScanList.sort(function (t, i) {
+              var n = "signal";
+              return a.rank(t[n], i[n], "desc", "num");
+            });
+            a.apScanList = p;
+          },
+          wan_change: function (t) {
+            "0" == this.proto ||
+            ("4" == this.proto && "1" == this.wan.pptpMode) ||
+            ("6" == this.proto && "1" == this.wan.l2tpMode)
+              ? ((this.wan.dnsMode = "1"), (this.dnsAbled = !0))
+              : ("init" != t && (this.wan.dnsMode = "0"), (this.dnsAbled = !1));
+          },
+          clone_change: function (t) {
+            var i = this;
+            setTimeout(function () {
+              $("#clonemac_pass").blur();
+            }, 100),
+              "1" == i.wan.clone
+                ? uiPost.getStationMacByIp(function (t) {
+                    (i.wan.cloneMac = t.stationMac), (i.macDisabled = !1);
+                  })
+                : ((i.wan.cloneMac = i.wan.defaultMac), (i.macDisabled = !0));
+          },
+          wifiVerify: function (t, i) {
+            var n = this.error;
+            if (this.wifi.wifiOff) {
+              if (0 == (a = cs.ssid(t))) return n(this.lang_t("wifi.msg1")), 0;
+              if (4 == a) return n(this.lang_t("wifi.msg18")), 0;
+              if (1 == a) return n(this.lang_t("wifi.msg20")), 0;
+              if (2 == a) return n(this.lang_t("wifi.msg3")), 0;
+            }
+            if (this.wifi.ispass && this.wifi.wifiOff) {
+              var a;
+              if (0 == (a = cs.string(i)))
+                return n(this.lang_t("wifi.pass") + this.lang_t("wan.msg1")), 0;
+              if (1 == a) return n(this.lang_t("wifi.msg5")), 0;
+              if (i.length < 8 || 63 < i.length)
+                return n(this.lang_t("wifi.msg4")), 0;
+            }
+            return 1;
+          },
+          wanVerify: function () {
+            var t,
+              i = this,
+              n = this.error;
+            if ("0" == this.proto) {
+              if (i.lanIp)
+                var a = i.lanIp.split(".")[0],
+                  s = this.wan.staticIp.split(".")[0],
+                  e = i.lanIp.split(".")[1],
+                  r = this.wan.staticIp.split(".")[1],
+                  p = i.lanIp.split(".")[2],
+                  h = this.wan.staticIp.split(".")[2];
+              if (0 == (t = cs.ip(this.wan.staticIp)))
+                return n(this.lang_t("wan.ip") + this.lang_t("wan.msg1")), 0;
+              if (1 == t)
+                return n(this.lang_t("wan.ip") + this.lang_t("wan.msg20")), 0;
+              if (2 == t)
+                return n(this.lang_t("wan.ip") + this.lang_t("wan.msg2")), 0;
+              if (3 == t)
+                return n(this.lang_t("wan.ip") + this.lang_t("wan.msg3")), 0;
+              if (4 == t)
+                return n(this.lang_t("wan.ip") + this.lang_t("wan.msg4")), 0;
+              if (this.wan.staticIp == location.host)
+                return n(this.lang_t("rule.msg57")), 0;
+              if (a == s && e == r && p == h && i.lanIp)
+                return n(i.lang_t("wan.ip") + i.lang_t("wan.msg32")), 0;
+              if (0 == (t = cs.mask(this.wan.staticMask)))
+                return n(this.lang_t("wan.mask") + this.lang_t("wan.msg1")), 0;
+              if (1 == t) return n(this.lang_t("wan.msg5")), 0;
+              if (0 == (t = cs.ip(this.wan.staticGw)))
+                return (
+                  n(this.lang_t("wan.gateway") + this.lang_t("wan.msg1")), 0
+                );
+              if (1 == t)
+                return (
+                  n(this.lang_t("wan.gateway") + this.lang_t("wan.msg20")), 0
+                );
+              if (2 == t)
+                return (
+                  n(this.lang_t("wan.gateway") + this.lang_t("wan.msg2")), 0
+                );
+              if (3 == t)
+                return (
+                  n(this.lang_t("wan.gateway") + this.lang_t("wan.msg3")), 0
+                );
+              if (4 == t)
+                return (
+                  n(this.lang_t("wan.gateway") + this.lang_t("wan.msg4")), 0
+                );
+              if (
+                this.wan.staticGw.split(".")[0] !=
+                  this.wan.staticIp.split(".")[0] ||
+                this.wan.staticGw.split(".")[1] !=
+                  this.wan.staticIp.split(".")[1] ||
+                this.wan.staticGw.split(".")[2] !=
+                  this.wan.staticIp.split(".")[2]
+              )
+                return n(this.lang_t("wan.msg6")), 0;
+              if (0 == (t = cs.num_range(this.wan.staticMtu, 576, 1500)))
+                return n(this.lang_t("wan.msg1")), 0;
+              if (1 == t) return n(this.lang_t("wan.msg9")), 0;
+              if (2 == t) return n(this.lang_t("wan.msg10", [576, 1500])), 0;
+            } else if ("1" == this.proto) {
+              if (0 == (t = cs.hostname(this.wan.hostName)))
+                return (
+                  n(this.lang_t("wan.hostname") + this.lang_t("wan.msg1")), 0
+                );
+              if (1 == t)
+                return (
+                  n(this.lang_t("wan.hostname") + this.lang_t("wan.msg31")), 0
+                );
+              if (0 == (t = cs.num_range(this.wan.dhcpMtu, 576, 1500)))
+                return n(this.lang_t("wan.msg1")), 0;
+              if (1 == t) return n(this.lang_t("wan.msg9")), 0;
+              if (2 == t) return n(this.lang_t("wan.msg10", [576, 1500])), 0;
+            } else if ("3" == this.proto) {
+              if (0 == (t = cs.string(this.wan.pppoeUser)))
+                return n(this.lang_t("wan.user") + this.lang_t("wan.msg1")), 0;
+              if (0 == (t = cs.string(this.wan.pppoePass)))
+                return n(this.lang_t("wan.pass") + this.lang_t("wan.msg1")), 0;
+              if (1 == t)
+                return n(this.lang_t("wan.pass") + this.lang_t("wan.msg22")), 0;
+              if (1 == (t = cs.string(this.wan.pppoeServiceName)))
+                return (
+                  n(this.lang_t("wan.server_name") + this.lang_t("wan.msg22")),
+                  0
+                );
+              if (1 == (t = cs.string(this.wan.pppoeAcName)))
+                return (
+                  n(this.lang_t("wan.ac_name") + this.lang_t("wan.msg22")), 0
+                );
+              if (0 == (t = cs.num_range(this.wan.pppoeMtu, 576, 1492)))
+                return n(this.lang_t("wan.msg1")), 0;
+              if (1 == t) return n(this.lang_t("wan.msg9")), 0;
+              if (2 == t) return n(this.lang_t("wan.msg10", [576, 1492])), 0;
+            } else if ("4" == this.proto || "6" == this.proto) {
+              var g = "pptp";
+              if (
+                ("6" == this.proto && (g = "l2tp"), "1" == this.wan[g + "Mode"])
+              ) {
+                if (0 == (t = cs.ip(this.wan[g + "Ip"])))
+                  return n(this.lang_t("wan.ip") + this.lang_t("wan.msg1")), 0;
+                if (1 == t)
+                  return n(this.lang_t("wan.ip") + this.lang_t("wan.msg20")), 0;
+                if (2 == t)
+                  return n(this.lang_t("wan.ip") + this.lang_t("wan.msg2")), 0;
+                if (3 == t)
+                  return n(this.lang_t("wan.ip") + this.lang_t("wan.msg3")), 0;
+                if (4 == t)
+                  return n(this.lang_t("wan.ip") + this.lang_t("wan.msg4")), 0;
+                if (0 == (t = cs.mask(this.wan[g + "Mask"])))
+                  return (
+                    n(this.lang_t("wan.mask") + this.lang_t("wan.msg1")), 0
+                  );
+                if (1 == t) return n(this.lang_t("wan.msg5")), 0;
+                if (0 == (t = cs.ip(this.wan[g + "Gw"])))
+                  return (
+                    n(this.lang_t("wan.gateway") + this.lang_t("wan.msg1")), 0
+                  );
+                if (1 == t)
+                  return (
+                    n(this.lang_t("wan.gateway") + this.lang_t("wan.msg20")), 0
+                  );
+                if (2 == t)
+                  return (
+                    n(this.lang_t("wan.gateway") + this.lang_t("wan.msg2")), 0
+                  );
+                if (3 == t)
+                  return (
+                    n(this.lang_t("wan.gateway") + this.lang_t("wan.msg3")), 0
+                  );
+                if (4 == t)
+                  return (
+                    n(this.lang_t("wan.gateway") + this.lang_t("wan.msg4")), 0
+                  );
+              }
+              if (0 == (t = cs.string(this.wan[g + "Server"])))
+                return (
+                  n(this.lang_t("vpn.server") + this.lang_t("wan.msg1")), 0
+                );
+              if (1 == t)
+                return (
+                  n(this.lang_t("vpn.server") + this.lang_t("wan.msg22")), 0
+                );
+              if (0 == (t = cs.string(this.wan[g + "User"])))
+                return n(this.lang_t("wan.user") + this.lang_t("wan.msg1")), 0;
+              if (0 == (t = cs.string(this.wan[g + "Pass"])))
+                return n(this.lang_t("wan.pass") + this.lang_t("wan.msg1")), 0;
+              if (1 == t)
+                return n(this.lang_t("wan.pass") + this.lang_t("wan.msg22")), 0;
+              if (0 == (t = cs.num_range(this.wan[g + "Mtu"], 576, 1460)))
+                return n(this.lang_t("wan.msg1")), 0;
+              if (1 == t) return n(this.lang_t("wan.msg9")), 0;
+              if (2 == t) return n(this.lang_t("wan.msg10", [576, 1460])), 0;
+            }
+            if ("1" == this.wan.dnsMode) {
+              if (0 == (t = cs.ip(this.wan.priDns)))
+                return (
+                  n(this.lang_t("wan.pri_dns") + this.lang_t("wan.msg1")), 0
+                );
+              if (99 != t)
+                return (
+                  n(this.lang_t("wan.pri_dns") + this.lang_t("wan.msg20")), 0
+                );
+              if (99 != (t = cs.ip(this.wan.secDns)) && 0 != t)
+                return (
+                  n(this.lang_t("wan.sec_dns") + this.lang_t("wan.msg20")), 0
+                );
+            }
+            return 0 == (t = cs.mac(this.wan.cloneMac))
+              ? (n(this.lang_t("rule.mac") + this.lang_t("rule.msg12")), 0)
+              : 1 == t
+              ? (n(this.lang_t("rule.msg17")), 0)
+              : 2 == t
+              ? (n(this.lang_t("rule.msg18")), 0)
+              : 3 == t
+              ? (n(this.lang_t("rule.msg19")), 0)
+              : 1;
+          },
+          rank: function (t, i, n, a) {
+            var s = (m = k = l = 0);
+            if (
+              ("ip" == a
+                ? ((s = Number(t.split(".")[2])),
+                  (m = Number(i.split(".")[2])),
+                  (k = Number(t.split(".")[3])),
+                  (l = Number(i.split(".")[3])))
+                : "num" == a
+                ? ((s = Number(t)), (m = Number(i)))
+                : ((s = t), (m = i)),
+              "asc" == n)
+            ) {
+              if (s > m) return 1;
+              if (s == m && "ip" == a) return k > l ? 1 : -1;
+              if (s < m) return -1;
+            } else {
+              if (s > m) return -1;
+              if (s == m && "ip" == a) return k > l ? -1 : 1;
+              if (s < m) return 1;
+            }
+          },
+          error: function (t) {
+            Cstool.Mark({ content: t, l_text: this.lang_t("common.back") });
+          },
+        },
+      };
+    </script>
+    <script src="/static/js/main.js"></script>
+  </body>
+</html>

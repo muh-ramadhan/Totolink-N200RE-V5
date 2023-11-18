@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="proma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no cache" />
+    <meta http-equiv="expires" content="0" />
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <link rel="stylesheet" href="/static/css/main.css" />
+    <link rel="stylesheet" href="/static/css/common.css" />
+    <link rel="stylesheet" href="/static/css/basic_menu.css" />
+    <link rel="stylesheet" href="/static/css/loading.css" /></head
+  ><style>
+    .cabe-table {
+      border: 2px #eee solid;
+    }
+  </style>
+  <body>
+    <div id="app"></div>
+    <script type="text/x-template" id="main">
+      <div class="basic-box">
+        <x-help :text="lang_t('wan.help')"></x-help>
+        <br>
+        <div class="fun-box">
+      	<span class="basic-title">{{ lang_t('menu.wan') }}</span>
+        </div>
+        <div class="fun-box">
+        	<table class="table" v-if="globalConfig.modelType == '4g'">
+            <tbody>
+            	<tr>
+      		  <td class="fun-left">{{ lang_t('wan.strategy') }}</td>
+      		  <td>
+      			<select v-model="strategy">
+      			  <!-- <option value="0">{{lang_t('wan.wired_preferred')}}</option> -->
+                    <option value="1">4G</option>
+                    <option value="2">{{lang_t('wan.wired')}}</option>
+      			</select>
+      		  </td>
+      		</tr>
+      		<tr v-show="">
+      	      <td class="fun-left">{{ lang_t('wan.detect_addr') }}</td>
+      	      <td>
+      	        <input type="text" v-model="domain_ip" v-verify="formRules" data-name="domain_ip">
+      	      </td>
+            	</tr>
+            </tbody>
+        	</table>
+          <table class="table" v-show="strategy!='1'" :class="[strategy == '0' ? 'cabe-table' : '']">
+            <tbody>
+            	<tr v-show="strategy == '0'">
+                <td colspan="2"><b style="color: #EA7105;font-weight:bold;">{{ lang_t('wan.wiredset') }}</b></td>
+              </tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.proto') }}</td>
+      		  <td>
+      			<select v-model="proto" @change="wan_change">
+      			  <option value="0" v-if="globalConfig.wanTypeList_STATIC">{{ lang_t('wan.static_ip') }}</option>
+      			  <option value="1" v-if="globalConfig.wanTypeList_DHCP">{{ lang_t('wan.dynamic_ip') }}</option>
+      			  <option value="3" v-if="globalConfig.wanTypeList_PPPOE">{{ lang_t('wan.pppoe') }}</option>
+      			  <option value="4" v-if="globalConfig.wanTypeList_PPTP">PPTP</option>
+      			  <option value="6" v-if="globalConfig.wanTypeList_L2TP">L2TP</option>
+      			</select>
+      			&nbsp;&nbsp;
+      			<a @click="discover" v-if="globalConfig.modelType != '4g'&&globalConfig.opmode!='wisp'">
+      			  <span class="link cursor">{{ lang_t('wan.auto_detect') }}</span>
+      			</a>
+      		  </td>
+      		</tr>
+      		<tr>
+      			<td class="fun-left">{{ lang_t('wan.status') }}</td>
+      			<td>
+      				<span v-html="connStatusHtml"></span>
+      				<span style="margin-left: 10px;" v-show="wanMode==3||wanMode==4||wanMode==6">
+      					<button style="background-color: green;color: #fff;padding: 2px 4px;" :disabled="linkBool" @click="linkDialFun('1')">{{lang_t('wan.connect')}}</button>
+      					|
+      					<button style="background-color: darkred;color: #fff;padding: 2px 4px;" :disabled="!linkBool" @click="linkDialFun('0')">{{lang_t('wan.disconnect')}}</button>
+      				</span>
+      			</td>
+      		</tr>
+      	  </tbody>
+            <tbody v-show="proto == 3">
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.user') }}</td>
+      		  <td>
+      			<input type="text" v-model="pppoeUser" v-verify="formRules" data-name="pppoeUser" maxlength="32">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.pass') }}</td>
+      		  <td>
+      			<input type="password" class="input input-err" v-model="pppoePass" v-pass v-verify="formRules" data-name="pppoePass" maxlength="32">
+      		  </td>
+      		</tr>
+      		<tr v-show="globalConfig.pppoeSpecSupport">
+      		  <td class="fun-left">{{ lang_t('wan.spec') }}</td>
+      		  <td>
+      			<select v-model="pppoeSpecType">
+      			  <option value="0">{{ lang_t('wan.none') }}</option>
+      			  <option value="1">{{ lang_t('wan.spec') }} 1</option>
+      			  <option value="2">{{ lang_t('wan.spec') }} 2</option>
+      			  <option value="3">{{ lang_t('wan.spec') }} 3</option>
+      			</select>
+      		  </td>
+      		</tr>
+      		<tr v-show="globalConfig.pppoeRussiaSupport">
+      		  <td class="fun-left">{{ lang_t('wan.server_name') }}</td>
+      		  <td>
+      			<input type="text" v-model="pppoeServiceName" v-verify="formRules" data-name="pppoeServiceName" maxlength="32">
+      		  </td>
+      		</tr>
+      		<tr v-show="globalConfig.pppoeRussiaSupport">
+      		  <td class="fun-left">{{ lang_t('wan.ac_name') }}</td>
+      		  <td>
+      			<input type="text" v-model="pppoeAcName" v-verify="formRules" data-name="pppoeAcName" maxlength="32">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">MTU</td>
+      		  <td>
+      			<input type="text" v-model="pppoeMtu" v-verify="formRules" data-name="pppoeMtu" maxlength="4">
+      			&nbsp;&nbsp;
+      			<small>({{ lang_t('wan.range') }}:576~1492)</small>
+      		  </td>
+      		</tr>
+      		<tr v-if="globalConfig.lcpEchoSupport">
+      			<td class="fun-left">{{ lang_t('wan.lcp_echo') }}</td>
+      			<td>
+      				<x-checkbox v-model="lcpEchoEnable"></x-checkbox>
+      			</td>
+      		</tr>
+      	  	</tbody>
+      	    <tbody v-show="proto == 4">
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.address_mode') }}</td>
+      		  <td>
+      		  	 <x-radio v-model="pptpMode" :name="vpnModeName" @change="wan_change" pos="col"></x-radio>
+      		  </td>
+      		</tr>
+      		<tr v-show="pptpMode == 1">
+      		  <td class="fun-left">{{ lang_t('wan.ip') }}</td>
+      		  <td>
+      			<input type="text" v-model="pptpIp" v-verify="formRules" data-name="pptpIp" maxlength="15">
+      		  </td>
+      		</tr>
+      		<tr v-show="pptpMode == 1" >
+      		  <td class="fun-left">{{ lang_t('wan.mask') }}</td>
+      		  <td>
+      			<input type="text" v-model="pptpMask" v-verify="formRules" data-name="pptpMask" maxlength="15">
+      		  </td>
+      		</tr>
+      		<tr v-show="pptpMode == 1">
+      		  <td class="fun-left">{{ lang_t('wan.gateway') }}</td>
+      		  <td>
+      			<input type="text" v-model="pptpGw" v-verify="formRules" data-name="pptpGw" maxlength="15">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.server_address') }}</td>
+      		  <td>
+      			<input type="text" v-model="pptpServer" v-verify="formRules" data-name="pptpServer" maxlength="32">
+      			&nbsp;&nbsp;
+      			<small>({{ lang_t('wan.ip_domain') }})</small>
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.user') }}</td>
+      		  <td>
+      			<input type="text" v-model="pptpUser" v-verify="formRules" data-name="pptpUser" maxlength="32">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.pass') }}</td>
+      		  <td>
+      			<input type="password" class="input input-err" v-model="pptpPass" v-pass v-verify="formRules" data-name="pptpPass" maxlength="32">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">MTU</td>
+      		  <td>
+      			<input type="text" v-model="pptpMtu" v-verify="formRules" data-name="pptpMtu" maxlength="4">
+      			&nbsp;&nbsp;
+      			<small>({{ lang_t('wan.range') }}:576~1460)</small>
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left"></td>
+      		  <td>
+      		  	<x-checkbox v-model="pptpMppe" :k_style="{'margin-right':'3.5rem'}" k_class="c-checkbox-k">MPPE</x-checkbox>
+      			<x-checkbox v-model="pptpMppc" k_class="c-checkbox-k">MPPC</x-checkbox>
+      		  </td>
+      		</tr>
+      	    </tbody>
+      	    <tbody v-show="proto == 6">
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.address_mode') }}</td>
+      		  <td>
+      		  	<x-radio v-model="l2tpMode" :name="vpnModeName" @change="wan_change" pos="col"></x-radio>
+      		  </td>
+      		</tr>
+      		<tr v-show="l2tpMode == 1">
+      		  <td class="fun-left">{{ lang_t('wan.ip') }}</td>
+      		  <td>
+      			<input type="text" v-model="l2tpIp" v-verify="formRules" data-name="l2tpIp" maxlength="15">
+      		  </td>
+      		</tr>
+      		<tr v-show="l2tpMode == 1">
+      		  <td class="fun-left">{{ lang_t('wan.mask') }}</td>
+      		  <td>
+      			<input type="text" v-model="l2tpMask" v-verify="formRules" data-name="l2tpMask" maxlength="15">
+      		  </td>
+      		</tr>
+      		<tr v-show="l2tpMode == 1">
+      		  <td class="fun-left">{{ lang_t('wan.gateway') }}</td>
+      		  <td>
+      			<input type="text" v-model="l2tpGw" v-verify="formRules" data-name="l2tpGw" maxlength="15">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.server_address') }}</td>
+      		  <td>
+      			<input type="text" v-model="l2tpServer" v-verify="formRules" data-name="l2tpServer" maxlength="32">
+      			&nbsp;&nbsp;
+      			<small>({{ lang_t('wan.ip_domain') }})</small>
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.user') }}</td>
+      		  <td>
+      			<input type="text" v-model="l2tpUser" v-verify="formRules" data-name="l2tpUser" maxlength="32">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.pass') }}</td>
+      		  <td>
+      			<input type="password" class="input input-err" v-model="l2tpPass" v-pass v-verify="formRules" data-name="l2tpPass" maxlength="32">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">MTU</td>
+      		  <td>
+      			<input type="text" v-model="l2tpMtu" v-verify="formRules" data-name="l2tpMtu" maxlength="4">
+      			&nbsp;&nbsp;
+      			<small>({{ lang_t('wan.range') }}:576~1460)</small>
+      		  </td>
+      		</tr>
+      	    </tbody>
+      	    <tbody v-show="proto == 0">
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.ip') }}</td>
+      		  <td>
+      			<input type="text" v-model="staticIp" v-verify="formRules" data-name="staticIp" maxlength="15">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.mask') }}</td>
+      		  <td>
+      			<input type="text" v-model="staticMask" v-verify="formRules" data-name="staticMask" maxlength="15">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.gateway') }}</td>
+      		  <td>
+      			<input type="text" v-model="staticGw" v-verify="formRules" data-name="staticGw" maxlength="15">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">MTU</td>
+      		  <td>
+      			<input type="text" v-model="staticMtu" v-verify="formRules" data-name="staticMtu" maxlength="4">
+      			&nbsp;&nbsp;
+      			<small>({{ lang_t('wan.range') }}:576~1500)</small>
+      		  </td>
+      		</tr>
+      	    </tbody>
+      	    <tbody v-show="proto == 1">
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.hostname') }}</td>
+      		  <td>
+      			<input type="text" v-model="hostName" v-verify="formRules" data-name="hostName" maxlength="32">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">MTU</td>
+      		  <td>
+      			<input type="text" v-model="dhcpMtu" v-verify="formRules" data-name="dhcpMtu" maxlength="4">
+      			&nbsp;&nbsp;
+      			<small>({{ lang_t('wan.range') }}:576~1500)</small>
+      		  </td>
+      		</tr>
+      		<tr v-if="globalConfig.option60Support">
+      			<td class="fun-left">Option60</td>
+      			<td>
+      				<x-checkbox v-model="option60Enable"></x-checkbox>
+      			</td>
+      		</tr>
+      	    </tbody>
+      	    <tbody>
+      		<tr v-show="globalConfig.ttlWaySupport">
+      		  <td class="fun-left">{{ lang_t('wan.ttlWay') }}</td>
+      		  <td>
+      		  	<x-checkbox v-model="ttlWay"></x-checkbox>
+      		  </td>
+      	    </tr>
+      		<tr>
+      		  <td colspan="2"></td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.dns_set') }}</td>
+      		  <td>
+      			<select v-model="dnsMode" :disabled="dnsAbled">
+      			  <option value="0">{{ lang_t('wan.auto_dns') }}</option>
+      			  <option value="1">{{ lang_t('wan.manual_dns') }}</option>
+      			  <option value="2" v-if="globalConfig.modelType != '4g'">{{ lang_t('wan.dns_penetrate') }}</option>
+      			</select>
+      		  </td>
+      		</tr>
+      		<!--<tr>
+      		  <td class="fun-left"></td>
+      		  <td>
+      		  	<x-switch class="t_radio_a" type="radio" :switch="dnsMode" :wan_radio_class="dns_radio_class" :name="dnsModeName" @on-change="dnsMode_change"></x-switch>
+      		  </td>
+      		</tr>-->
+      		<tr v-show="dnsMode == '1'">
+      		  <td class="fun-left">{{ lang_t('wan.pri_dns') }}</td>
+      		  <td>
+      			<input type="text" v-model="priDns" v-verify="formRules" data-name="priDns" maxlength="15">
+      		  </td>
+      		</tr>
+      		<tr v-show="dnsMode == '1'">
+      		  <td class="fun-left">{{ lang_t('wan.sec_dns') }}</td>
+      		  <td>
+      			<input type="text" v-model="secDns" v-verify="formRules" data-name="secDns" maxlength="15">
+      			&nbsp;&nbsp;
+      			<small>({{ lang_t('wan.optional') }})</small>
+      		  </td>
+      		</tr>
+      	    </tbody>
+      	    <tbody v-if="globalConfig.opmode!='wisp'">
+      		<tr>
+      		  <td class="fun-left"></td>
+      		  <td>
+      		  	<x-radio v-model="clone" :name="cloneName" @change="clone_change"></x-radio>
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.mac') }}</td>
+      		  <td>
+      			<input type="text" v-model="cloneMac"  id="clonemac_pass" v-verify="formRules" data-name="cloneMac" maxlength="17" :disabled="macDisabled">
+      		  </td>
+      		</tr>
+      	    </tbody>
+      	</table>
+      	<br v-show="strategy == '0'">
+      	<table class="table" v-show="globalConfig.modelType == '4g'&&(strategy=='1' || strategy=='0')" :class="[strategy == '0' ? 'cabe-table' : '']">
+      	  <tbody>
+      	  <tr v-show="strategy == '0'">
+      		<td colspan="2"><b style="color: #EA7105;font-weight:bold;">{{ lang_t('wan.4gset') }}</b></td>
+      	  </tr>
+      	  <tr>
+      		<td class="fun-left">{{ lang_t('wan.ip') }}</td>
+      		<td><input type="text" :value="ip4g" disabled></td>
+      	  </tr>
+      	  <tr>
+      		<td class="fun-left">{{ lang_t('wan.module_type') }}</td>
+      		<td><input type="text" :value="moduleType" disabled></td>
+      	  </tr>
+      	  <tr>
+      		<td class="fun-left">{{ lang_t('wan.4gmode') }}</td>
+      		<td>
+      		  <select v-model="lteCfg.mode4g" :key="lang_t('wan.auto')">
+      			<option value="0">{{ lang_t('wan.auto') }}</option>
+      			<option value="1">{{ lang_t('wan.manual') }}</option>
+      		  </select>
+      		</td>
+      	  </tr>
+      	  </tbody>
+      	  <tbody v-show="lteCfg.mode4g=='1'">
+      		<tr>
+      		  <td class="fun-left">APN</td>
+      		  <td>
+      			<input type="text" v-model="lteCfg.apn" :placeholder="lang_t('wan.msg23')">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.dial_num') }}</td>
+      		  <td>
+      			<input type="text" v-model="lteCfg.dialNum">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.validation') }}</td>
+      		  <td>
+      			<select v-model="lteCfg.validation">
+      			  <option value="0">{{ lang_t('wan.none') }}</option>
+      			  <option value="1">PAP</option>
+      			  <option value="2">CHAP</option>
+      			  <option value="3">CHAPv2</option>
+      			</select>
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.user') }}</td>
+      		  <td>
+      			<input type="text" v-model="lteCfg.user4g" :placeholder="lang_t('wan.msg23')">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.pass') }}</td>
+      		  <td>
+      			<input type="text" v-model="lteCfg.pass4g" :placeholder="lang_t('wan.msg23')">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.pin_code') }}</td>
+      		  <td>
+      			<input type="text" v-model="lteCfg.pinCode" :placeholder="lang_t('wan.msg23')">
+      		  </td>
+      		</tr>
+      	  </tbody>
+        	</table>
+      	<table class="table">
+      	    <tbody>
+      		<tr><td colspan="2"></td></tr>
+      		<tr>
+      		  <td class="fun-left"></td>
+      		  <td>
+      			<button type="button" class="btn" @click="handleSubmit">{{ lang_t('common.apply') }}</button>
+      		  </td>
+      		</tr>
+      	  </tbody>
+          </table>
+        </div>
+      </div>
+    </script>
+    <script src="/plugin/vue.js"></script>
+    <script src="/plugin/jquery-3.2.1.min.js"></script>
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/layout.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/topicurl.js"></script>
+    <script>
+      var cs_main = {
+        template: "#main",
+        data: function () {
+          return {
+            globalConfig: globalConfig,
+            lang: $.lang,
+            lang_t: lang_t,
+            proto: "",
+            defaultMac: "",
+            macDisabled: !1,
+            discoverProto: "",
+            dnsEnable: !1,
+            dns_radio_class: [],
+            dnsAbled: !1,
+            strategy: "2",
+            ipStatus: "",
+            moduleType: "",
+            lteCfg: {
+              mode4g: "0",
+              pinCode: "",
+              apn: "",
+              dialNum: "",
+              user4g: "",
+              pass4g: "",
+              validation: "0",
+            },
+            wanDetectSupport: !1,
+            pppoeUser: "",
+            pppoePass: "",
+            pppoeSpecType: "",
+            pppoeServiceName: "",
+            pppoeAcName: "",
+            pppoeMtu: "",
+            pptpMode: "",
+            pptpIp: "",
+            pptpMask: "",
+            pptpGw: "",
+            pptpDomainFlag: "",
+            pptpServerIp: "",
+            pptpServerDomain: "",
+            pptpServer: "",
+            pptpUser: "",
+            pptpPass: "",
+            pptpMtu: "",
+            pptpMppe: "",
+            pptpMppc: "",
+            l2tpMode: "",
+            l2tpDomainFlag: "",
+            l2tpServerIp: "",
+            l2tpServerDomain: "",
+            l2tpServer: "",
+            l2tpIp: "",
+            l2tpMask: "",
+            l2tpGw: "",
+            l2tpUser: "",
+            l2tpPass: "",
+            l2tpMtu: "",
+            staticIp: "",
+            staticMask: "",
+            staticGw: "",
+            staticMtu: "",
+            hostName: "",
+            dhcpMtu: "",
+            dnsMode: "0",
+            priDns: "",
+            secDns: "",
+            ttlWay: !1,
+            clone: "",
+            cloneMac: "",
+            domain_ip: "",
+            lcpEchoEnable: !1,
+            option60Enable: !1,
+            connStatus: "",
+            wanMode: "",
+            linkBool: !1,
+          };
+        },
+        computed: {
+          connStatusHtml: function () {
+            var t = this.lang_t("wan.disconnected"),
+              a = "#db3b21";
+            return (
+              "connected" == this.connStatus &&
+                ((t = this.lang_t("wan.connected")), (a = "#28a745")),
+              '<span style="color:' + a + ';">' + t + "</span>"
+            );
+          },
+          vpnModeName: function () {
+            return ["wan.dynamic", "wan.static"];
+          },
+          mppeName: function () {
+            return ["MPPE", "MPPC"];
+          },
+          dnsModeName: function () {
+            return ["wan.auto_dns", "wan.manual_dns"];
+          },
+          cloneName: function () {
+            return ["wan.default", "wan.clone"];
+          },
+          ip4g: function () {
+            return "" == this.ipStatus
+              ? this.lang_t("wan.msg24")
+              : this.ipStatus;
+          },
+          formRules: function () {
+            var p = this;
+            return {
+              staticIp: function (t, a) {
+                if ("0" == p.proto) {
+                  var n = cs.ip(t);
+                  0 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg20"))
+                    : 2 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg2"))
+                    : 3 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg3"))
+                    : 4 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg4"))
+                    : t == location.host
+                    ? a(p.lang_t("rule.msg57"))
+                    : 1 == cs.ip_subnet(t, p.lanNetmask, p.lanIp)
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg32"))
+                    : a();
+                } else a();
+              },
+              staticMask: function (t, a) {
+                "0" == p.proto
+                  ? t
+                    ? 1 == cs.mask(t)
+                      ? a(p.lang_t("wan.msg5"))
+                      : "0.0.0.0" == t || "255.255.255.255" == t
+                      ? a(p.lang_t("wan.msg5"))
+                      : a()
+                    : a(p.lang_t("wan.mask") + p.lang_t("wan.msg1"))
+                  : a();
+              },
+              staticGw: function (t, a) {
+                if ("0" == p.proto) {
+                  var n = cs.ip(t);
+                  0 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg20"))
+                    : 2 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg2"))
+                    : 3 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg3"))
+                    : 4 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg4"))
+                    : cs.ip_subnet(t, p.staticMask, p.staticIp)
+                    ? a()
+                    : a(p.lang_t("wan.msg6"));
+                } else a();
+              },
+              staticMtu: function (t, a) {
+                if ("0" == p.proto) {
+                  var n = cs.num_range(t, 576, 1500);
+                  0 == n
+                    ? a("MTU " + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a("MTU " + p.lang_t("rule.msg24"))
+                    : 2 == n
+                    ? a(p.lang_t("wan.msg10", [576, 1500]))
+                    : a();
+                } else a();
+              },
+              hostName: function (t, a) {
+                if ("1" == p.proto) {
+                  var n = cs.hostname(t);
+                  0 == n
+                    ? a(p.lang_t("wan.hostname") + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a(p.lang_t("wan.hostname") + p.lang_t("wan.msg31"))
+                    : a();
+                } else a();
+              },
+              dhcpMtu: function (t, a) {
+                if ("1" == p.proto) {
+                  var n = cs.num_range(t, 576, 1500);
+                  0 == n
+                    ? a("MTU " + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a("MTU " + p.lang_t("rule.msg24"))
+                    : 2 == n
+                    ? a(p.lang_t("wan.msg10", [576, 1500]))
+                    : a();
+                } else a();
+              },
+              pppoeUser: function (t, a) {
+                "3" == p.proto
+                  ? 0 == cs.string(t, "dun")
+                    ? a(p.lang_t("wan.user") + p.lang_t("wan.msg1"))
+                    : a()
+                  : a();
+              },
+              pppoePass: function (t, a) {
+                if ("3" == p.proto) {
+                  var n = cs.string(t, "dun");
+                  0 == n
+                    ? a(p.lang_t("wan.pass") + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a(p.lang_t("wan.pass") + p.lang_t("wan.msg22"))
+                    : a();
+                } else a();
+              },
+              pppoeServiceName: function (t, a) {
+                "3" == p.proto
+                  ? 1 == cs.string(t)
+                    ? a(p.lang_t("wan.server_name") + p.lang_t("wan.msg22"))
+                    : a()
+                  : a();
+              },
+              pppoeAcName: function (t, a) {
+                "3" == p.proto
+                  ? 1 == cs.string(t)
+                    ? a(p.lang_t("wan.ac_name") + p.lang_t("wan.msg22"))
+                    : a()
+                  : a();
+              },
+              pppoeMtu: function (t, a) {
+                if ("3" == p.proto) {
+                  var n = cs.num_range(t, 576, 1492);
+                  0 == n
+                    ? a("MTU " + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a("MTU " + p.lang_t("rule.msg24"))
+                    : 2 == n
+                    ? a(p.lang_t("wan.msg10", [576, 1492]))
+                    : a();
+                } else a();
+              },
+              pptpIp: function (t, a) {
+                if ("4" == p.proto && "1" == p.pptpMode) {
+                  var n = cs.ip(t);
+                  0 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg20"))
+                    : 2 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg2"))
+                    : 3 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg3"))
+                    : 4 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg4"))
+                    : a();
+                } else a();
+              },
+              pptpMask: function (t, a) {
+                "4" == p.proto && "1" == p.pptpMode
+                  ? t
+                    ? 1 == cs.mask(t)
+                      ? a(p.lang_t("wan.msg5"))
+                      : "0.0.0.0" == t || "255.255.255.255" == t
+                      ? a(p.lang_t("wan.msg5"))
+                      : a()
+                    : a(p.lang_t("wan.mask") + p.lang_t("wan.msg1"))
+                  : a();
+              },
+              pptpGw: function (t, a) {
+                if ("4" == p.proto && "1" == p.pptpMode) {
+                  var n = cs.ip(t);
+                  0 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg20"))
+                    : 2 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg2"))
+                    : 3 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg3"))
+                    : 4 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg4"))
+                    : cs.ip_subnet(t, p.pptpMask, p.pptpIp)
+                    ? a()
+                    : a(p.lang_t("wan.msg6"));
+                } else a();
+              },
+              pptpServer: function (t, a) {
+                "4" == p.proto
+                  ? t
+                    ? cs.isUrl(t)
+                      ? a()
+                      : a(p.lang_t("vpn.server") + p.lang_t("wan.msg20"))
+                    : a(p.lang_t("vpn.server") + p.lang_t("wan.msg1"))
+                  : a();
+              },
+              pptpUser: function (t, a) {
+                "4" == p.proto
+                  ? 0 == cs.string(t)
+                    ? a(p.lang_t("wan.user") + p.lang_t("wan.msg1"))
+                    : a()
+                  : a();
+              },
+              pptpPass: function (t, a) {
+                if ("4" == p.proto) {
+                  var n = cs.string(t);
+                  0 == n
+                    ? a(p.lang_t("wan.pass") + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a(p.lang_t("wan.pass") + p.lang_t("wan.msg22"))
+                    : a();
+                } else a();
+              },
+              pptpMtu: function (t, a) {
+                if ("4" == p.proto) {
+                  var n = cs.num_range(t, 576, 1460);
+                  0 == n
+                    ? a("MTU " + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a("MTU " + p.lang_t("rule.msg24"))
+                    : 2 == n
+                    ? a(p.lang_t("wan.msg10", [576, 1460]))
+                    : a();
+                } else a();
+              },
+              l2tpIp: function (t, a) {
+                if ("6" == p.proto && "1" == p.l2tpMode) {
+                  var n = cs.ip(t);
+                  0 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg20"))
+                    : 2 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg2"))
+                    : 3 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg3"))
+                    : 4 == n
+                    ? a(p.lang_t("wan.ip") + p.lang_t("wan.msg4"))
+                    : a();
+                } else a();
+              },
+              l2tpMask: function (t, a) {
+                "6" == p.proto && "1" == p.l2tpMode
+                  ? t
+                    ? 1 == cs.mask(t)
+                      ? a(p.lang_t("wan.msg5"))
+                      : "0.0.0.0" == t || "255.255.255.255" == t
+                      ? a(p.lang_t("wan.msg5"))
+                      : a()
+                    : a(p.lang_t("wan.mask") + p.lang_t("wan.msg1"))
+                  : a();
+              },
+              l2tpGw: function (t, a) {
+                if ("6" == p.proto && "1" == p.l2tpMode) {
+                  var n = cs.ip(t);
+                  0 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg20"))
+                    : 2 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg2"))
+                    : 3 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg3"))
+                    : 4 == n
+                    ? a(p.lang_t("wan.gateway") + p.lang_t("wan.msg4"))
+                    : cs.ip_subnet(t, p.l2tpMask, p.l2tpIp)
+                    ? a()
+                    : a(p.lang_t("wan.msg6"));
+                } else a();
+              },
+              l2tpServer: function (t, a) {
+                "6" == p.proto
+                  ? t
+                    ? cs.isUrl(t)
+                      ? a()
+                      : a(p.lang_t("vpn.server") + p.lang_t("wan.msg20"))
+                    : a(p.lang_t("vpn.server") + p.lang_t("wan.msg1"))
+                  : a();
+              },
+              l2tpUser: function (t, a) {
+                "6" == p.proto
+                  ? 0 == cs.string(t)
+                    ? a(p.lang_t("wan.user") + p.lang_t("wan.msg1"))
+                    : a()
+                  : a();
+              },
+              l2tpPass: function (t, a) {
+                if ("6" == p.proto) {
+                  var n = cs.string(t);
+                  0 == n
+                    ? a(p.lang_t("wan.pass") + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a(p.lang_t("wan.pass") + p.lang_t("wan.msg22"))
+                    : a();
+                } else a();
+              },
+              l2tpMtu: function (t, a) {
+                if ("6" == p.proto) {
+                  var n = cs.num_range(t, 576, 1460);
+                  0 == n
+                    ? a("MTU " + p.lang_t("wan.msg1"))
+                    : 1 == n
+                    ? a("MTU " + p.lang_t("rule.msg24"))
+                    : 2 == n
+                    ? a(p.lang_t("wan.msg10", [576, 1460]))
+                    : a();
+                } else a();
+              },
+              priDns: function (t, a) {
+                "1" == p.dnsMode
+                  ? t
+                    ? 99 != cs.ip(t)
+                      ? a(p.lang_t("wan.pri_dns") + p.lang_t("wan.msg20"))
+                      : a()
+                    : a(p.lang_t("wan.pri_dns") + p.lang_t("wan.msg1"))
+                  : a();
+              },
+              secDns: function (t, a) {
+                "1" == p.dnsMode
+                  ? "" == t
+                    ? a()
+                    : 99 != cs.ip(t)
+                    ? a(p.lang_t("wan.sec_dns") + p.lang_t("wan.msg20"))
+                    : a()
+                  : a();
+              },
+              cloneMac: function (t, a) {
+                t || a(p.lang_t("rule.mac") + p.lang_t("rule.msg12"));
+                var n = cs.mac(t);
+                1 == n
+                  ? a(p.lang_t("rule.msg17"))
+                  : 2 == n
+                  ? a(p.lang_t("rule.msg18"))
+                  : 3 == n
+                  ? a(p.lang_t("rule.msg19"))
+                  : 99 == n && a();
+              },
+              domain_ip: function (t, a) {
+                if ("0" == p.strategy) {
+                  var n = cs.ip(t);
+                  1 == n
+                    ? a(p.lang_t("wan.detect_addr") + p.lang_t("wan.msg20"))
+                    : 2 == n
+                    ? a(p.lang_t("wan.detect_addr") + p.lang_t("wan.msg2"))
+                    : 3 == n
+                    ? a(p.lang_t("wan.detect_addr") + p.lang_t("wan.msg3"))
+                    : 4 == n
+                    ? a(p.lang_t("wan.detect_addr") + p.lang_t("wan.msg4"))
+                    : a();
+                } else a();
+              },
+            };
+          },
+        },
+        created: function () {
+          var a = this;
+          uiPost.getLanCfg(function (t) {
+            (a.lanIp = t.lanIp), (a.lanNetmask = t.lanNetmask);
+          }),
+            uiPost.getWanCfg(function (t) {
+              (a.connStatus = t.wanConnStatus),
+                (a.linkBool = "connected" == t.wanConnStatus),
+                (a.defaultMac = t.defaultMac),
+                (a.proto = t.proto),
+                (a.wanMode = t.proto),
+                (a.pppoeUser = t.pppoeUser),
+                (a.pppoePass = t.pppoePass),
+                (a.pppoeSpecType = t.pppoeSpecType),
+                (a.pppoeServiceName = t.pppoeServiceName),
+                (a.pppoeAcName = t.pppoeAcName),
+                (a.pppoeMtu = t.pppoeMtu),
+                (a.lcpEchoEnable = "1" == t.lcpEchoEnable),
+                (a.option60Enable = "1" == t.option60Enable),
+                (a.pptpMode = t.pptpMode),
+                (a.pptpIp = t.pptpIp),
+                (a.pptpMask = t.pptpMask),
+                (a.pptpGw = t.pptpGw),
+                (a.pptpDomainFlag = t.pptpDomainFlag),
+                "0" == t.pptpDomainFlag
+                  ? (a.pptpServer = t.pptpServerIp)
+                  : (a.pptpServer = t.pptpServerDomain),
+                (a.pptpUser = t.pptpUser),
+                (a.pptpPass = t.pptpPass),
+                (a.pptpMtu = t.pptpMtu),
+                (a.pptpMppe = "1" == t.pptpMppe),
+                (a.pptpMppc = "1" == t.pptpMppc),
+                (a.l2tpMode = t.l2tpMode),
+                (a.l2tpIp = t.l2tpIp),
+                (a.l2tpMask = t.l2tpMask),
+                (a.l2tpGw = t.l2tpGw),
+                (a.l2tpUser = t.l2tpUser),
+                (a.l2tpPass = t.l2tpPass),
+                (a.l2tpMtu = t.l2tpMtu),
+                (a.l2tpDomainFlag = t.l2tpDomainFlag),
+                "0" == t.l2tpDomainFlag
+                  ? (a.l2tpServer = t.l2tpServerIp)
+                  : (a.l2tpServer = t.l2tpServerDomain),
+                (a.staticIp = t.staticIp),
+                (a.staticMask = t.staticMask),
+                (a.staticGw = t.staticGw),
+                (a.staticMtu = t.staticMtu),
+                (a.hostName = t.hostName),
+                (a.dhcpMtu = t.dhcpMtu),
+                (a.dnsMode = t.dnsMode),
+                (a.dnsEnable = "0" == t.dnsMode),
+                (a.priDns = t.priDns),
+                (a.secDns = t.secDns),
+                (a.ttlWay = "1" == t.ttlWay),
+                (a.clone = t.clone),
+                "0" == t.clone
+                  ? (a.cloneMac = t.defaultMac)
+                  : (a.cloneMac = t.cloneMac),
+                "0" == t.clone ? (a.macDisabled = !0) : (a.macDisabled = !1),
+                "4g" == globalConfig.modelType
+                  ? ((a.strategy = t.wanStrategy),
+                    (a.domain_ip = t.domainName),
+                    (a.ipStatus = t.ipStatus),
+                    (a.moduleType = t.moduleType),
+                    (a.lteCfg.apn = t.apn),
+                    (a.lteCfg.validation = t.validation),
+                    (a.lteCfg.user4g = t.user4g),
+                    (a.lteCfg.pass4g = t.pass4g),
+                    (a.lteCfg.pinCode = t.pinCode),
+                    (a.lteCfg.mode4g = t.mode4g),
+                    (a.lteCfg.dialNum = t.dialNum))
+                  : (a.strategy = "2"),
+                a.wan_change(1);
+            });
+        },
+        methods: {
+          wan_change: function (t) {
+            "0" == this.proto ||
+            ("4" == this.proto && "1" == this.pptpMode) ||
+            ("6" == this.proto && "1" == this.l2tpMode)
+              ? ((this.dnsMode = "1"), (this.dnsAbled = !0))
+              : (1 != t && (this.dnsMode = "0"), (this.dnsAbled = !1));
+          },
+          mppe_change: function (t) {
+            this.pptpMppe = t;
+          },
+          mppc_change: function (t) {
+            this.pptpMppc = t;
+          },
+          clone_change: function (t) {
+            var a = this;
+            setTimeout(function () {
+              $("#clonemac_pass").blur();
+            }, 100),
+              "1" == t
+                ? uiPost.getStationMacByIp(function (t) {
+                    (a.cloneMac = t.stationMac), (a.macDisabled = !1);
+                  })
+                : ((a.cloneMac = a.defaultMac), (a.macDisabled = !0));
+          },
+          discover: function () {
+            var a = this;
+            $("#show_waiting").show(),
+              uiPost.discoverWan({}, function (t) {
+                $("#show_waiting").hide(),
+                  "-1" == t.discoverProto
+                    ? Cstool.Msg({
+                        content: this.lang_t("wan.wan_disconnected"),
+                      })
+                    : (a.proto = t.discoverProto);
+              });
+          },
+          linkDialFun: function (t) {
+            uiPost.setManualDialCfg({ dialStatus: t }, function (t) {
+              var a = 5;
+              t && t.wtime && (a = t.wtime),
+                Cstool.Count(a, "js", function () {
+                  location.href = location.href;
+                });
+            });
+          },
+          handleSubmit: function () {
+            var a = this,
+              n = {};
+            Cstool.Verify(this.formRules, function (t) {
+              (t || "1" == a.strategy) &&
+                ("4g" == globalConfig.modelType &&
+                  (("0" != a.strategy && "1" != a.strategy) ||
+                    ((n = a.lteCfg),
+                    "1" != a.strategy && (n.domainName = a.domain_ip)),
+                  (n.wanStrategy = a.strategy)),
+                ("0" != a.strategy && "2" != a.strategy) ||
+                  ("0" == a.proto
+                    ? ((n.staticIp = a.staticIp),
+                      (n.staticMask = a.staticMask),
+                      (n.staticGw = a.staticGw),
+                      (n.staticMtu = a.staticMtu))
+                    : "1" == a.proto
+                    ? ((n.hostName = a.hostName), (n.dhcpMtu = a.dhcpMtu))
+                    : "3" == a.proto
+                    ? ((n.pppoeUser = a.pppoeUser),
+                      (n.pppoePass = a.pppoePass),
+                      (n.pppoeSpecType = a.pppoeSpecType),
+                      (n.pppoeServiceName = a.pppoeServiceName),
+                      (n.pppoeAcName = a.pppoeAcName),
+                      (n.pppoeMtu = a.pppoeMtu))
+                    : "4" == a.proto
+                    ? ((n.pptpMode = a.pptpMode),
+                      (n.pptpIp = a.pptpIp),
+                      (n.pptpMask = a.pptpMask),
+                      (n.pptpGw = a.pptpGw),
+                      99 == cs.ip(a.pptpServer)
+                        ? ((n.pptpDomainFlag = "0"),
+                          (n.pptpServerIp = a.pptpServer))
+                        : ((n.pptpDomainFlag = "1"),
+                          (n.pptpServerDomain = a.pptpServer)),
+                      (n.pptpUser = a.pptpUser),
+                      (n.pptpPass = a.pptpPass),
+                      (n.pptpMtu = a.pptpMtu),
+                      (n.pptpMppe = a.pptpMppe ? "1" : "0"),
+                      (n.pptpMppc = a.pptpMppc ? "1" : "0"))
+                    : "6" == a.proto &&
+                      ((n.l2tpMode = a.l2tpMode),
+                      (n.l2tpIp = a.l2tpIp),
+                      (n.l2tpMask = a.l2tpMask),
+                      (n.l2tpGw = a.l2tpGw),
+                      99 == cs.ip(a.l2tpServer)
+                        ? ((n.l2tpDomainFlag = "0"),
+                          (n.l2tpServerIp = a.l2tpServer))
+                        : ((n.l2tpDomainFlag = "1"),
+                          (n.l2tpServerDomain = a.l2tpServer)),
+                      (n.l2tpUser = a.l2tpUser),
+                      (n.l2tpPass = a.l2tpPass),
+                      (n.l2tpMtu = a.l2tpMtu)),
+                  (n.proto = a.proto),
+                  (n.dnsMode = a.dnsMode),
+                  "1" == a.dnsMode &&
+                    ((n.priDns = a.priDns), (n.secDns = a.secDns)),
+                  (n.ttlWay = a.ttlWay ? "1" : "0"),
+                  (n.lcpEchoEnable = a.lcpEchoEnable ? "1" : "0"),
+                  (n.option60Enable = a.option60Enable ? "1" : "0"),
+                  (n.clone = a.clone),
+                  (n.cloneMac = a.cloneMac)),
+                uiPost.setWanCfg(n, function (t) {
+                  var a = 60;
+                  t.wtime && "0" != t.wtime && (a = t.wtime),
+                    Cstool.Count(a, "js", function () {
+                      location.href = location.href;
+                    });
+                }));
+            });
+          },
+        },
+      };
+    </script>
+    <script src="/static/js/main.js"></script>
+  </body>
+</html>

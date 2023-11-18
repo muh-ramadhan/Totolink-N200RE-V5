@@ -1,0 +1,675 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=1200,initial-scale=1"><meta name="apple-mobile-web-app-capable" content="yes"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><meta content="width=device-width,initial-scale=1,user-scalable=no" name="viewport"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><link rel="stylesheet" href="/static/css/phone/style.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <div class="toper">
+    <phone-back url="/phone/home.html" :title="lang_t('menu.wizard')"></phone-back>
+  </div>
+  <div class="nav">{{ wizardTitle }}</div>
+  <br><br>
+  <div style="position: fixed;text-align: center;width: 100%;bottom: 3%;z-index: 5000" id="dot_id">
+  	<div class="dot" style="width:105px;">
+	  <i v-for="dot in 6" :class="[dotIdx == dot ? 'active' : '']" v-show="(globalConfig.wizardIptvSupport && dot == 3) || (!globalConfig.projectOwnerTw && dot == 5) || (dot != 3 && dot != 5)"></i>
+	</div>
+  </div>  
+  <div v-if="dotIdx == 1">
+	<div class="content">
+	  <div class="group">
+		<div class="item-l">
+		  {{ lang_t('time.time_zone') }}
+		</div>
+		<div class="item-r">
+		  <select v-model="tz" style="width: 220px;">
+			 <option value="UTC+12">(UTC-12:00) {{ lang_t('time.ntp25') }}</option>
+			 <option value="UTC+11">(UTC-11:00) {{ lang_t('time.ntp1') }}</option>
+			 <option value="UTC+10">(UTC-10:00) {{ lang_t('time.ntp2') }}</option>
+			 <option value="UTC+9">(UTC-09:00) {{ lang_t('time.ntp3') }}</option>
+			 <option value="UTC+8">(UTC-08:00) {{ lang_t('time.ntp4') }}</option>
+			 <option value="UTC+7">(UTC-07:00) {{ lang_t('time.ntp5') }}</option>
+			 <option value="UTC+6">(UTC-06:00) {{ lang_t('time.ntp6') }}</option>
+			 <option value="UTC+5">(UTC-05:00) {{ lang_t('time.ntp7') }}</option>
+			 <option value="UTC+4">(UTC-04:00) {{ lang_t('time.ntp8') }}</option>
+			 <option value="UTC+3">(UTC-03:00) {{ lang_t('time.ntp9') }}</option>
+			 <option value="UTC+2">(UTC-02:00) {{ lang_t('time.ntp10') }}</option> 
+			 <option value="UTC+1">(UTC-01:00) {{ lang_t('time.ntp11') }}</option>
+			 <option value="UTC+0">(UTC-00:00) {{ lang_t('time.ntp12') }}</option>
+			 <option value="UTC-1">(UTC+01:00) {{ lang_t('time.ntp13') }}</option>
+			 <option value="UTC-2">(UTC+02:00) {{ lang_t('time.ntp14') }}</option>
+			 <option value="UTC-3">(UTC+03:00) {{ lang_t('time.ntp15') }}</option>
+			 <option value="UTC-4">(UTC+04:00) {{ lang_t('time.ntp16') }}</option>
+			 <option value="UTC-5">(UTC+05:00) {{ lang_t('time.ntp17') }}</option>
+			 <option value="UTC-6">(UTC+06:00) {{ lang_t('time.ntp18') }}</option>
+			 <option value="UTC-7">(UTC+07:00) {{ lang_t('time.ntp19') + (globalConfig.softwareType == 'Indonesia' ? lang_t('time.ntp_india') : '') }}</option>
+			 <option value="UTC-8">(UTC+08:00) {{ lang_t('time.ntp20') }}</option>
+			 <option value="UTC-9">(UTC+09:00) {{ lang_t('time.ntp21') }}</option>
+			 <option value="UTC-10">(UTC+10:00) {{ lang_t('time.ntp22') }}</option>
+			 <option value="UTC-11">(UTC+11:00) {{ lang_t('time.ntp23') }}</option>
+			 <option value="UTC-12">(UTC+12:00) {{ lang_t('time.ntp24') }}</option>
+		  </select>
+		</div>
+	  </div>
+	</div>
+  </div>  
+  <div v-if="dotIdx == 2">
+    <div class="content">
+	  <div class="group" v-if="globalConfig.modelType == '4g'">
+	    <div class="item-l">{{ lang_t('wan.strategy') }}</div>
+	    <div class="item-r">
+		  <select v-model="strategy">
+            <option value="1">4G</option>
+            <option value="2">{{lang_t('wan.wired')}}</option>
+		  </select>
+	    </div>
+	  </div>	
+	  <div v-show="strategy != '1'">
+		<div class="group">
+		  <div class="item-l">{{ lang_t('wan.proto') }}</div>
+		  <div class="item-r">
+			<select v-model="proto">
+			  <option value="0" v-if="globalConfig.wanTypeList_STATIC">{{ lang_t('wan.static_ip') }}</option>
+			  <option value="1" v-if="globalConfig.wanTypeList_DHCP">{{ lang_t('wan.dynamic_ip') }}</option>
+			  <option value="3" v-if="globalConfig.wanTypeList_PPPOE">{{ lang_t('wan.pppoe') }}</option>
+			  <option value="4" v-if="globalConfig.wanTypeList_PPTP">PPTP</option>
+			  <option value="6" v-if="globalConfig.wanTypeList_L2TP">L2TP</option>
+			</select>
+		  </div>
+		</div>
+		<div class="group" v-if="globalConfig.modelType != '4g' && globalConfig.opmode != 'wisp'">
+		  <div class="item-link">
+		  	<a class="link" @click="discover">{{ lang_t('wan.auto_detect') }}</a>
+		  </div>
+	  	</div>	
+	    <div v-show="proto == '0'">
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.ip') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="staticIp" :maxlength="15">
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.mask') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="staticMask" :maxlength="15">
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.gateway') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="staticGw" :maxlength="15">
+			</div>
+		  </div>
+	    </div>
+	    <div v-show="proto == '1'"></div>
+	    <div v-show="proto == '3'">
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.user') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="pppoeUser" :maxlength="32">
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.pass') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="pppoePass" v-pass :maxlength="32">
+			</div>
+		  </div>
+		</div>
+	    <div v-show="proto == '4'">
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.address_mode') }}</div>
+			<div class="item-r">
+			  <select v-model="pptpMode">
+				<option value="0">{{ lang_t('wan.dynamic') }}</option>
+				<option value="1">{{ lang_t('wan.static') }}</option>
+			  </select>
+			</div>
+		  </div>
+		  <div v-show="pptpMode == 1">
+			<div class="group">
+			  <div class="item-l">{{ lang_t('wan.ip') }}</div>
+			  <div class="item-r">
+				<input type="text" v-model="pptpIp" maxlength="15">
+			  </div>
+			</div>
+			<div class="group">
+			  <div class="item-l">{{ lang_t('wan.mask') }}</div>
+			  <div class="item-r">
+				<input type="text" v-model="pptpMask" maxlength="15">
+			  </div>
+			</div>
+			<div class="group">
+			  <div class="item-l">{{ lang_t('wan.gateway') }}</div>
+			  <div class="item-r">
+				<input type="text" v-model="pptpGw" maxlength="15">
+			  </div>
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.server_address') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="pptpServer" :maxlength="32">
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.user') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="pptpUser" :maxlength="32">
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.pass') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="pptpPass" v-pass :maxlength="32">
+			</div>
+		  </div>
+		</div>
+	    <div v-show="proto == '6'">
+	      <div class="group">
+			<div class="item-l">{{ lang_t('wan.address_mode') }}</div>
+			<div class="item-r">
+			  <select v-model="l2tpMode">
+				<option value="0">{{ lang_t('wan.dynamic') }}</option>
+				<option value="1">{{ lang_t('wan.static') }}</option>
+			  </select>
+			</div>
+		  </div>
+		  <div v-show="l2tpMode == '1'">
+			<div class="group">
+			  <div class="item-l">{{ lang_t('wan.ip') }}</div>
+			  <div class="item-r">
+				<input type="text" v-model="l2tpIp" maxlength="15">
+			  </div>
+			</div>
+			<div class="group">
+			  <div class="item-l">{{ lang_t('wan.mask') }}</div>
+			  <div class="item-r">
+				<input type="text" v-model="l2tpMask" maxlength="15">
+			  </div>
+			</div>
+			<div class="group">
+			  <div class="item-l">{{ lang_t('wan.gateway') }}</div>
+			  <div class="item-r">
+				<input type="text" v-model="l2tpGw" maxlength="15">
+			  </div>
+		    </div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.server_address') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="l2tpServer" :maxlength="32">
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.user') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="l2tpUser" :maxlength="32">
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.pass') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="l2tpPass" v-pass :maxlength="32">
+			</div>
+		  </div>
+	    </div>
+	    <div v-show="proto=='0'||(proto=='4'&&pptpMode=='1')||(proto=='6'&&l2tpMode=='1')">
+	   	  <div class="group">
+			<div class="item-l">{{ lang_t('wan.pri_dns') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="priDns" :maxlength="15">
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.sec_dns') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="secDns" :maxlength="15">
+			</div>
+		  </div>
+	    </div>		
+		<div v-show="proto == '4'">
+		  <div class="group">
+		    <div class="item-l">&nbsp</div>
+			<div class="item-r">
+			  <div style="font-size:12px;padding-right:10px;">
+				<x-checkbox v-model="pptpMppe">MPPE</x-checkbox>
+				<x-checkbox v-model="pptpMppc">MPPC</x-checkbox>
+			  </div>
+			</div>
+		  </div>
+		</div>
+	  </div>	
+	  <div v-show="strategy == '1'">
+	  	<div class="group">
+		  <div class="item-l">{{ lang_t('wan.ip') }}</div>
+		  <div class="item-r">
+			<input type="text" :value="ip4g" disabled>
+		  </div>
+		</div>
+		<div class="group">
+		  <div class="item-l">{{ lang_t('wan.module_type') }}</div>
+		  <div class="item-r">
+			<input type="text" v-model="moduleType" disabled>
+		  </div>
+		</div>
+	  	<div class="group">
+		  <div class="item-l">{{ lang_t('wan.4gmode') }}</div>
+		  <div class="item-r">
+		    <select v-model="mode4g">
+			  <option value="0">{{ lang_t('wan.auto') }}</option>
+			  <option value="1">{{ lang_t('wan.manual') }}</option>
+		    </select>
+		  </div>
+		</div>
+		<div v-show="mode4g == '1'">
+		  <div class="group">
+			<div class="item-l">APN</div>
+			<div class="item-r">
+			  <input type="text" v-model="apn" :placeholder="lang_t('wan.msg23')">
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.dial_num') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="dialNum">
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.validation') }}</div>
+			<div class="item-r">
+			  <select v-model="validation">
+				<option value="0">NONE</option>
+				<option value="1">PAP</option>
+				<option value="2">CHAP</option>
+				<option value="3">CHAPv2</option>
+			  </select>
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.user') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="user4g" :placeholder="lang_t('wan.msg23')">
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.pass') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="pass4g" :placeholder="lang_t('wan.msg23')">
+			</div>
+		  </div>
+		  <div class="group">
+			<div class="item-l">{{ lang_t('wan.pin_code') }}</div>
+			<div class="item-r">
+			  <input type="text" v-model="pinCode" :placeholder="lang_t('wan.msg23')">
+			</div>
+		  </div>
+		</div>
+	  </div>
+    </div>
+  </div>  
+  <div v-else-if="dotIdx == 3">
+	<div class="content">
+	  <div class="group">
+		<div class="item-sw"><b>{{ lang_t('iptv.state') }}</b></div>
+		<div class="item-r">
+		  <x-switch v-model="iptvEnabled"></x-switch>
+		</div>
+	  </div>
+	  <div class="group" v-show="iptvEnabled">
+		<div class="item-l">{{ lang_t('iptv.mode') }}</div>
+		<div class="item-r">
+		  <select v-model="m_iptvVer" @change="change_mode">
+			<option v-for="iptvmode in iptvmodeOption" :value="iptvmode.value" :key="iptvmode.value">{{iptvmode.option}}</option>
+		  </select>
+		</div>
+	  </div>
+	  <div v-show="iptvEnabled">
+		<div class="group" v-show="show_internet_vid">
+		  <div class="item-l">802.1Q Tag</div>
+		  <div class="item-r">
+		    <div style="float:right;margin:-20% -45% 0 0;">
+			  <x-checkbox v-model="tagflag" :disabled="tag_class"></x-checkbox>
+			</div>
+		  </div>
+		</div>
+		<div v-show="show_internet_vid">
+		  <div class="group">
+		    <div class="item-l">{{ lang_t('iptv.vlan_id') }}</div>
+		    <div class="item-r">
+			  <input type="text" v-model="internetVid" :maxlength="4" :disabled="edit_disable" style="width:90px">
+		    </div>
+		  </div>
+		  <div class="group">
+		    <div class="item-l">{{ lang_t('iptv.vlan_priority') }}</div>
+		    <div class="item-r">
+			  <select v-model="internetPri" :disabled="edit_disable" style="width:100px">
+			    <option value="0">0</option>
+			    <option value="1">1</option>
+			    <option value="2">2</option>
+			    <option value="3">3</option>
+			    <option value="4">4</option>
+			    <option value="5">5</option>
+			    <option value="6">6</option>
+			    <option value="7">7</option>
+			  </select>
+			</div>
+		  </div>
+		</div>
+		<div v-show="show_ipphone_vid">
+		  <div class="group">
+		    <div class="item-l">{{ lang_t('iptv.ipphone_vlan_id') }}</div>
+		    <div class="item-r">
+			  <input type="text" v-model="ipPhoneVid" :maxlength="4" :disabled="edit_disable" style="width:90px"/>
+		    </div>
+		  </div>
+		  <div class="group">
+		    <div class="item-l">{{ lang_t('iptv.ipphone_vlan_priority') }}</div>
+		    <div class="item-r">
+			  <select v-model="ipPhonePri" :disabled="edit_disable" style="width:100px">
+			    <option value="0">0</option>
+			    <option value="1">1</option>
+			    <option value="2">2</option>
+			    <option value="3">3</option>
+			    <option value="4">4</option>
+			    <option value="5">5</option>
+			    <option value="6">6</option>
+			    <option value="7">7</option>
+			  </select>
+			</div>
+		  </div>
+		</div>
+		<div v-show="show_iptv_vid">
+		  <div class="group">
+		    <div class="item-l">{{ lang_t('iptv.iptv_vlan_id') }}</div>
+		    <div class="item-r">
+			  <input type="text" v-model="iptvVid" :maxlength="4" :disabled="edit_disable" style="width:90px"/>
+		    </div>
+		  </div>
+		  <div class="group">	
+		    <div class="item-l">{{ lang_t('iptv.iptv_vlan_priority') }}</div>
+		    <div class="item-r">
+			  <select v-model="iptvPri" :disabled="edit_disable" style="width:100px">
+			    <option value="0">0</option>
+			    <option value="1">1</option>
+			    <option value="2">2</option>
+			    <option value="3">3</option>
+			    <option value="4">4</option>
+			    <option value="5">5</option>
+			    <option value="6">6</option>
+			    <option value="7">7</option>
+			  </select>
+			</div>
+		  </div>
+		</div>
+		<div class="group" v-show="lan_show_flag_1">
+		  <div class="item-l">LAN 1</div>
+		  <div class="item-r">
+			<select v-model="lan1" :disabled="edit_disable" style="width:100px">
+			  <option value="1">IPTV</option>
+			  <option value="2">IP-Phone</option>
+			  <option value="3">{{ lang_t('iptv.internet') }}</option>
+			</select>
+		  </div>
+		</div>
+		<div class="group" v-show="lan_show_flag_2">
+		  <div class="item-l">LAN 2</div>
+		  <div class="item-r">
+			<select v-model="lan2" :disabled="edit_disable" style="width:100px">
+			  <option value="1">IPTV</option>
+			  <option value="2">IP-Phone</option>
+			  <option value="3">{{ lang_t('iptv.internet') }}</option>
+			</select>
+		  </div>
+		</div>
+		<div class="group" v-show="lan_show_flag_3">
+		  <div class="item-l">LAN 3</div>
+		  <div class="item-r">
+			<select v-model="lan3" :disabled="edit_disable" style="width:100px">
+			  <option value="1">IPTV</option>
+			  <option value="2">IP-Phone</option>
+			  <option value="3">{{ lang_t('iptv.internet') }}</option>
+			</select>
+		  </div>
+		</div>
+		<div class="group" v-show="lan_show_flag_4">
+		  <div class="item-l">LAN 4</div>
+		  <div class="item-r">
+			<select v-model="lan4" :disabled="edit_disable" style="width:100px">
+			  <option value="1">IPTV</option>
+			  <option value="2">IP-Phone</option>
+			  <option value="3">{{ lang_t('iptv.internet') }}</option>
+			</select>
+		  </div>
+		</div>
+		<div v-if="iptvEnabled&&globalConfig.softwareType!='Indonesia'">
+		  <div class="group" v-show="wlan0_show_flag">
+			<div class="item-l">2.4G WiFi</div>
+			<div class="item-r">
+			  <select v-model="wlan0" :disabled="edit_disable" style="width:100px">
+				<option value="1">IPTV</option>
+				<option value="2">IP-Phone</option>
+				<option value="3">{{ lang_t('iptv.internet') }}</option>
+			  </select>
+			</div>
+		  </div>
+		  <div class="group" v-show="wlan0_guest_show_flag">
+			<div class="item-l">2.4G WiFi {{ lang_t('menu.guest') }}</div>
+			<div class="item-r">
+			  <select v-model="wlan0_guest" :disabled="edit_disable" style="width:100px">
+				<option value="1">IPTV</option>
+				<option value="2">IP-Phone</option>
+				<option value="3">{{ lang_t('iptv.internet') }}</option>
+			  </select>
+			</div>
+		  </div>
+		  <div v-if="wifiDualband == '1'">
+		    <div class="group" v-show="wlan1_show_flag">
+			  <div class="item-l">5G WiFi</div>
+			  <div class="item-r">
+			    <select v-model="wlan1" :disabled="edit_disable" style="width:100px">
+				  <option value="1">IPTV</option>
+				  <option value="2">IP-Phone</option>
+				  <option value="3">{{ lang_t('iptv.internet') }}</option>
+			    </select>
+			  </div>
+			</div>
+			<div class="group" v-show="wlan1_guest_show_flag">
+			  <div class="item-l">5G WiFi {{ lang_t('menu.guest') }}</div>
+			  <div class="item-r">
+			    <select v-model="wlan1_guest" :disabled="edit_disable" style="width:100px">
+				  <option value="1">IPTV</option>
+				  <option value="2">IP-Phone</option>
+				  <option value="3">{{ lang_t('iptv.internet') }}</option>
+			    </select>
+			  </div>
+			</div>
+		  </div>
+		</div>
+		<div v-if="iptvEnabled&&globalConfig.softwareType=='Indonesia'">
+		  <div class="group" v-show="wlan0_show_flag">
+			<div class="item-l">2.4G WiFi</div>
+			<div class="item-r">
+			  <select v-model="wlan0" :disabled="edit_disable" style="width:100px">
+				<option value="1">IPTV</option>
+				<option value="2">IP-Phone</option>
+				<option value="3">{{ lang_t('iptv.internet') }}</option>
+			  </select>
+			</div>
+		  </div>
+		  <div v-for="(v,i) in 4" :key="i">
+		    <div class="group" v-show="wlan0_guest_show_flag">
+			  <div class="item-l">2.4G WiFi {{ lang_t('menu.guest') }} {{v}}</div>
+			  <div class="item-r">
+			    <select v-model="wlan0Guest[i]" :disabled="edit_disable" style="width:100px">
+				  <option value="1">IPTV</option>
+				  <option value="2">IP-Phone</option>
+				  <option value="3">{{ lang_t('iptv.internet') }}</option>
+			    </select>
+			  </div>
+			</div>
+		  </div>
+		  <div class="group" v-show="wlan1_show_flag">
+			<div class="item-l">5G WiFi</div>
+			<div class="item-r">
+			  <select v-model="wlan1" :disabled="edit_disable" style="width:100px">
+				<option value="1">IPTV</option>
+				<option value="2">IP-Phone</option>
+				<option value="3">{{ lang_t('iptv.internet') }}</option>
+			  </select>
+			</div>
+		  </div>
+		  <div v-for="(v,i) in 4" :key="i">
+		    <div class="group" v-show="wlan1_guest_show_flag">
+			  <div class="item-l">5G WiFi {{ lang_t('menu.guest') }} {{v}}</div>
+			  <div class="item-r">
+			    <select v-model="wlan1Guest[i]" :disabled="edit_disable" style="width:100px">
+				  <option value="1">IPTV</option>
+				  <option value="2">IP-Phone</option>
+				  <option value="3">{{ lang_t('iptv.internet') }}</option>
+			    </select>
+			  </div>
+			</div>
+		  </div>
+		</div>
+	  </div>
+	</div>
+  </div>  
+  <div v-else-if="dotIdx == 4">
+	<div class="content">
+	  <div class="group" v-if="wifiDualband != '0'">
+		<div class="item-sw"><b>{{ lang_t('wifi.merge') }}<b></div>
+		<div class="item-r">
+		  <x-switch v-model="merge"></x-switch>
+		</div>
+	  </div>
+	  <div class="space"></div>
+	  <div class="group">
+	    <div class="item-sw"><b><span v-show="!merge">2.4GHz </span>{{ lang_t('wifi.state') }}</b></div>
+	    <div class="item-r">
+		  <x-switch v-model="wifi2g" :disabled="wifiSchEnabled2g" @change="abledFun"></x-switch>
+	    </div>
+	  </div>
+	  <div class="group">
+	    <div class="item-l">{{ lang_t('wifi.ssid') }}</div>
+	    <div class="item-r">
+		  <input type="text" v-model="ssid2g" :maxlength="32" :disabled="ssid_2g">
+	    </div>
+	  </div>
+	  <div class="group">
+	    <div class="item-l">{{ lang_t('wifi.pass') }}</div>
+	    <div class="item-r">
+		  <input type="text" v-model="password2g" v-pass :maxlength="63" :disabled="pass_2g">
+	    </div>
+	  </div>
+	  <div class="group">
+	    <div class="item-l">{{ lang_t('wifi.hide_ssid') }}</div>
+	    <div class="item-r">
+		  <x-switch v-model="hide2g" :disabled="hide2gdis"></x-switch>
+	    </div>
+	  </div>
+	  <div class="group" v-if="globalConfig.wifiWpa2Wpa3Support">
+	    <div class="item-l">{{ lang_t('wifi.wpa3') }}</div>
+	    <div class="item-r">
+		  <div style="float:right;margin:-20% -45% 0 0;">
+			<x-checkbox v-model="wpa" :disabled="hide2gdis" @change="wpaChange"></x-checkbox>
+		  </div>
+	    </div>
+	  </div>
+	  <div v-show="!merge && wifiDualband != '0'">
+	    <div class="space"></div>
+	    <div class="group">
+		  <div class="item-sw"><b>5GHz {{ lang_t('wifi.state') }}</b></div>
+		  <div class="item-r">
+		    <x-switch v-model="wifi5g" :disabled="wifiSchEnabled5g" @change="abledFun"></x-switch>
+		  </div>
+	    </div>
+	    <div class="group">
+		  <div class="item-l">{{ lang_t('wifi.ssid') }}</div>
+		  <div class="item-r">
+		    <input type="text" v-model="ssid5g" :maxlength="32" :disabled="ssid_5g">
+		  </div>
+	    </div>
+	    <div class="group">
+		  <div class="item-l">{{ lang_t('wifi.pass') }}</div>
+		  <div class="item-r">
+		    <input type="text" v-model="password5g" v-pass :maxlength="63" :disabled="pass_5g">
+		  </div>
+	    </div>
+	    <div class="group">
+		  <div class="item-l">{{ lang_t('wifi.hide_ssid') }}</div>
+		  <div class="item-r">
+			<x-switch v-model="hide5g" :disabled="hide5gdis"></x-switch>
+		  </div>
+	    </div>
+	    <div class="group" v-if="globalConfig.wifiWpa2Wpa3Support">
+		  <div class="item-l">{{ lang_t('wifi.wpa3') }}</div>
+		  <div class="item-r">
+		    <div style="float:right;margin:-20% -45% 0 0;">
+			  <x-checkbox v-model="wpa5g" :disabled="hide5gdis" @change="wpaChange"></x-checkbox>
+		    </div>
+		  </div>
+		</div>
+	  </div>
+	</div>
+  </div>  
+  <div v-else-if="dotIdx == 5">
+	<div class="content">
+	  <div class="group">
+		<div class="item-l">{{ lang_t('wizard.login_pass') }}</div>
+		<div class="item-r">
+		  <input type="text" v-model="loginpass" :maxlength="32" v-pass :readonly="useWifi">
+		</div>
+	  </div>
+	  <div class="group">
+		<div class="item-sw">{{ lang_t('wizard.use_wifi2g_pass') }}</div>
+		<div class="item-r">
+		  <x-switch v-model="useWifi" @change="changeUseWifi" :disabled="hssidclass2g"></x-switch>
+		</div>
+	  </div>
+	</div>
+  </div>  
+  <div v-else-if="dotIdx == 6">
+	<div class="content">
+	  <div class="group">
+	  	<div class="item-l">{{ lang_t('wan.proto') }}</div>
+		<div class="item-r" style="color:#f60">{{ wanMode }}</div>
+	  </div>
+	  <div class="space"></div>
+ 	  <div class="group">
+ 	  	<div class="item-l"><b>2.4GHz {{ lang_t('wifi.wireless') }}<b></div>
+		<div class="item-r">{{ wifi2g ? lang_t('common.on') : lang_t('common.off') }}</div>
+	  </div>
+	  <div class="group">
+	  	<div class="item-l">{{ lang_t('wifi.ssid') }}</div>
+		<div class="item-r">{{ ssid2g }}&nbsp;</div>
+	  </div>
+	  <div class="group">
+	  	<div class="item-l">{{ lang_t('wifi.pass') }}</div>
+		<div class="item-r">{{ password2g }}&nbsp;</div>
+	  </div>
+	  <div v-if="wifiDualband != '0'">
+		<div class="group">
+		  <div class="item-l"><b>5GHz {{ lang_t('wifi.wireless') }}</b></div>
+		  <div class="item-r">{{merge ? (wifi2g? lang_t('common.on') : lang_t('common.off')): (wifi5g ? lang_t('common.on') : lang_t('common.off'))}}</div>
+		</div>
+		<div class="group">
+		  <div class="item-l">{{ lang_t('wifi.ssid') }}</div>
+		  <div class="item-r">{{merge ?ssid2g: ssid5g }}&nbsp;</div>
+		</div>
+		<div class="group">
+		  <div class="item-l">{{ lang_t('wifi.pass') }}</div>
+		  <div class="item-r">{{ password5g }}&nbsp;</div>
+		</div>
+	  </div>
+	  <div v-show="!globalConfig.projectOwnerTw">
+	    <div class="space"></div>
+		<div class="group">
+		  <div class="item-l">{{ lang_t('wizard.login_pass') }}</div>
+		  <div class="item-r" style="word-break:break-all;">{{ loginpass }}&nbsp;</div>
+		</div>
+	  </div>
+	</div>
+  </div>  
+  <div style="position:fixed;text-align:center;width:100%;bottom:1%;padding:0 0 10% 0;">
+    <div class="footer">
+	  <button class="btn" @click="operatFun('back')" style="width:45%;">{{ dotIdx == 1 ? lang_t('common.exit') : lang_t('common.back') }}</button>
+	  <button class="btn" @click="operatFun('next')" style="width:45%;margin-left:10%;">{{ dotIdx == 6 ? lang_t('common.done') : lang_t('common.next') }}</button>
+    </div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/phone_layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,proto:"0",pppoeUser:"",pppoePass:"",staticIp:"",lanIp:"",staticMask:"",staticGw:"",pptpServer:"",pptpUser:"",pptpPass:"",pptpMppe:!1,pptpMppc:!1,l2tpServer:"",l2tpUser:"",l2tpPass:"",cloneMac:"",priDns:"",secDns:"",tempWanData:{},dotIdx:1,tz:"",merge:!0,wifi2g:!1,wifi5g:!1,hide2g:!1,hide5g:!1,hide2gdis:!1,hide5gdis:!1,hssidclass2g:!1,ssid2g:"",ssid5g:"",password2g:"",password5g:"",wifiDualband:"0",ssid_2g:!1,ssid_5g:!1,pass_2g:!1,pass_5g:!1,showMacData:!1,wpa:!1,wpa5g:!1,loginpass:"",useWifi:!1,dataCfg:{},strategy:"1",ipStatus:"",moduleType:"",mode4g:"0",apn:"",dialNum:"",user4g:"",pass4g:"",pinCode:"",validation:"0",domainName:"",mainHeight:"500px",wifiSchEnabled2g:!1,wifiSchEnabled5g:!1,pptpMode:"0",pptpIp:"",pptpGw:"",pptpMask:"",l2tpMode:"",l2tpIp:"",l2tpMask:"",l2tpGw:"",iptvVer:"0",edit_disable:!1,show_internet_vid:!1,show_ipphone_vid:!1,show_iptv_vid:!1,disable_class:"disable-class",classOn:!1,tag_class:!1,initdata:"",m_iptvVer:"2",iptvEnabled:!1,internetVid:"7",internetPri:"3",tagflag:!1,ipPhoneVid:"22",ipPhonePri:"5",iptvVid:"10",iptvPri:"2",lan1:"1",lan2:"3",lan3:"2",lan4:"1",wlan0:"2",wlan0_guest:"1",wlan1:"1",wlan1_guest:"2",lan_show:"1,1,1,1",wlan_show:"1,1,1,1,1,1",lan_show_flag_1:!1,lan_show_flag_2:!1,lan_show_flag_3:!1,lan_show_flag_4:!1,wlan0_show_flag:!1,wlan0_guest_show_flag:!1,wlan1_show_flag:!1,wlan1_guest_show_flag:!1,wlan0Guest:[],wlan1Guest:[]}},computed:{wizardTitle:function(){switch(this.dotIdx){case 1:return this.lang_t("wizard.timezone");case 2:return this.lang_t("wizard.internet");case 3:return this.lang_t("wizard.iptv");case 4:return this.lang_t("wizard.wireless");case 5:return this.lang_t("wizard.change_pwd");case 6:return this.lang_t("wizard.summary")}},iptvmodeOption:function(){return[{option:"Singapore-Singtel",value:"1"},{option:"Malaysia-Unifi",value:"2"},{option:"Malaysia-Maxis1",value:"3"},{option:"Malaysia-Maxis2",value:"6"},{option:"Malaysia-Celcom",value:"7"},{option:"VTV",value:"4"},{option:"Taiwan",value:"5"},{option:"User Define",value:"0"}]},wanMode:function(){var t="";switch(this.proto){case"0":t=this.lang_t("wan.static_ip");break;case"1":t=this.lang_t("wan.dynamic_ip");break;case"3":t=this.lang_t("wan.pppoe");break;case"4":t="PPTP";break;case"6":t="L2TP"}return t},ip4g:function(){return""==this.ipStatus?this.lang_t("wan.msg24"):this.ipStatus}},created:function(){var i=this;uiPost.getWizardCfg(function(t){i.lanIp=t.lanIp,globalConfig.wizardIptvSupport&&(i.initdata=t,i.iptvEnabled="1"==t.iptvEnabled,i.tagflag="1"==t.tagFlag,i.m_iptvVer=t.iptvVer,i.lan_show=t.lan_show,i.wlan_show=t.wlan_show,i.edit_disable="1"==t.iptvVer,i.edit_disable&&(i.tag_class=!0),i.show_internet_vid="5"!=t.iptvVer,"3"==t.iptvVer||"4"==t.iptvVer||"0"==t.iptvVer?i.show_ipphone_vid=!0:i.show_ipphone_vid=!1,i.show_iptv_vid="5"!=t.iptvVer,i.internetVid=t.internetVid,i.internetPri=t.internetPri,i.ipPhoneVid=t.ipPhoneVid,i.ipPhonePri=t.ipPhonePri,i.iptvVid=t.iptvVid,i.iptvPri=t.iptvPri,1==i.lan_show[0]&&(i.lan1=t.lan1,i.lan_show_flag_1=!0),1==i.lan_show[2]&&(i.lan2=t.lan2,i.lan_show_flag_2=!0),1==i.lan_show[4]&&(i.lan3=t.lan3,i.lan_show_flag_3=!0),1==i.lan_show[6]&&(i.lan4=t.lan4,i.lan_show_flag_4=!0),1==i.wlan_show[0]&&(i.wlan0=t.wlan0,i.wlan0_show_flag=!0),1==i.wlan_show[2]&&(i.wlan0_guest=t.wlan0_guest),1==i.wlan_show[4]&&(i.wlan1=t.wlan1,i.wlan1_show_flag=!0),1==i.wlan_show[6]&&(i.wlan1_guest=t.wlan1_guest),i.change_mode()),i.dataCfg=t,i.wifiSchEnabled2g="1"==t.wifiSchEnabled2g,i.wifiSchEnabled5g="1"==t.wifiSchEnabled5g,i.defaultMac=t.defaultMac,i.tz=t.tz,i.proto=t.proto,i.pppoeUser=t.pppoeUser,i.pppoePass=t.pppoePass,i.pptpMode=t.pptpMode,i.pptpIp=t.pptpIp,i.pptpMask=t.pptpMask,i.pptpGw=t.pptpGw,"0"==t.pptpDomainFlag?i.pptpServer=t.pptpServerIp:i.pptpServer=t.pptpServerDomain,i.pptpUser=t.pptpUser,i.pptpPass=t.pptpPass,i.pptpMppe="1"==t.pptpMppe,i.pptpMppc="1"==t.pptpMppc,i.l2tpMode=t.l2tpMode,i.l2tpIp=t.l2tpIp,i.l2tpMask=t.l2tpMask,i.l2tpGw=t.l2tpGw,"0"==t.l2tpDomainFlag?i.l2tpServer=t.l2tpServerIp:i.l2tpServer=t.l2tpServerDomain,i.l2tpUser=t.l2tpUser,i.l2tpPass=t.l2tpPass,i.staticIp=t.staticIp,i.staticMask=t.staticMask,i.staticGw=t.staticGw,i.priDns=t.priDns,i.secDns=t.secDns,"0"==t.clone?i.cloneMac=t.defaultMac:i.cloneMac=t.cloneMac,"0"==t.clone?i.macDisabled=!0:i.macDisabled=!1,i.merge="1"==t.merge,i.wifiDualband=t.wifiDualband,i.wifi2g="0"==t.wifiOff,i.ssid2g=t.ssid,i.hide2g="1"==t.hssid,i.password2g=t.key,i.wpa="2"==t.wpaMode,"0"!=i.wifiDualband&&(i.wifi5g="0"==t.wifiOff5g,i.ssid5g=t.ssid5g,i.hide5g="1"==t.hssid5g,i.password5g=t.key5g,i.wpa5g="2"==t.wpaMode5g),i.abledFun(i.wifi2g,i.wifi5g),t.lanIp==location.hostname?i.showMacData=!0:i.showMacData=!1,"4g"==globalConfig.modelType?(i.strategy=t.wanStrategy,i.domainName=t.domainName,i.ipStatus=t.ipStatus,i.moduleType=t.moduleType,i.apn=t.apn,i.validation=t.validation,i.user4g=t.user4g,i.pass4g=t.pass4g,i.pinCode=t.pinCode,i.mode4g=t.mode4g,i.dialNum=t.dialNum):i.strategy="2"})},mounted:function(){var t=document.getElementById("dot_id"),i=($(window).width()-95)/2;t.style.left=i+"px",this.mainHeight=window.innerHeight-$(".btn-header-back").height()-$("#dot_id").height()-50+"px",globalConfig.wizardIptvSupport&&(this.iptvDis=!0)},methods:{wifiPassVeriy:function(){var t=this,i=null;return t.hssidclass2g=!1,""==t.password2g&&(Cstool.Mark({content:t.lang_t("wifi.msg14"),cancel:function(){("0"==t.wifiDualband||t.merge&&"0"!=t.wifiDualband||!t.merge&&"0"!=t.wifiDualband&&(8<=t.password5g.length||""==t.password5g))&&(globalConfig.projectOwnerTw?t.dotIdx+=2:t.dotIdx++)}}),i=!1),(32<t.password2g.length||!1===i)&&(t.hssidclass2g=!0,t.useWifi=!1),"0"!=t.wifiDualband&&(t.merge||""==t.password5g&&(null===i&&Cstool.Mark({content:t.lang_t("wifi.msg14"),cancel:function(){"1"==t.wifiDualband&&(globalConfig.projectOwnerTw?t.dotIdx+=2:t.dotIdx++)}}),i=!1)),!1!==i},wpaChange:function(t){t&&Cstool.Mark({content:lang_t("wifi.wpa3_info"),l_text:lang_t("common.ok")})},discover:function(){var i=this;uiPost.discoverWan(function(t){Cstool.Mark({type:"load",time:3,content:i.lang_t("firmware.newcloudUpdateing"),success:function(){"-1"==t.discoverProto?Cstool.Mark({content:i.lang_t("wan.wan_disconnected"),l_text:i.lang_t("common.back")}):i.proto=t.discoverProto}})})},rulesVeriy:function(t){if(globalConfig.wizardIptvSupport||3!=t){var i=this,s=this.errorAlert;if(2==t){if("1"==this.strategy)return!0;if("0"==this.proto){var a=cs.ip(this.staticIp);if(i.lanIp)var n=i.lanIp.split(".")[0],p=this.staticIp.split(".")[0],e=i.lanIp.split(".")[1],h=this.staticIp.split(".")[1],l=i.lanIp.split(".")[2],r=this.staticIp.split(".")[2];if(0==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg1")),!1;if(1==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg20")),!1;if(2==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg2")),!1;if(3==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg3")),!1;if(4==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg4")),!1;if(this.staticIp==location.host)return s(this.lang_t("rule.msg57")),!1;if(n==p&&e==h&&l==r&&i.lanIp)return s(i.lang_t("wan.ip")+i.lang_t("wan.msg32")),!1;if(!this.staticMask)return s(this.lang_t("wan.mask")+this.lang_t("wan.msg1")),!1;if(1==(a=cs.mask(this.staticMask)))return s(this.lang_t("wan.msg5")),!1;if(0==(a=cs.ip(this.staticGw)))return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg1")),!1;if(1==a)return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg20")),!1;if(2==a)return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg2")),!1;if(3==a)return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg3")),!1;if(4==a)return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg4")),!1;if(!cs.ip_subnet(this.staticGw,this.staticMask,this.staticIp))return s(this.lang_t("wan.msg6")),!1}if("3"==this.proto){if(0==(a=cs.string(this.pppoeUser)))return s(this.lang_t("wan.user")+this.lang_t("wan.msg1")),!1;if(0==(a=cs.string(this.pppoePass)))return s(this.lang_t("wan.pass")+this.lang_t("wan.msg1")),!1;if(1==a)return s(this.lang_t("wan.pass")+this.lang_t("wan.msg22")),!1}if("4"==this.proto){if("1"==this.pptpMode){if(0==(a=cs.ip(this.pptpIp)))return s(this.lang_t("wan.ip")+this.lang_t("wan.msg1")),!1;if(1==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg20")),!1;if(2==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg2")),!1;if(3==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg3")),!1;if(4==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg4")),!1;if(0==(a=cs.mask(this.pptpMask)))return s(this.lang_t("wan.mask")+this.lang_t("wan.msg1")),!1;if(1==a)return s(this.lang_t("wan.msg5")),!1;if(0==(a=cs.ip(this.pptpGw)))return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg1")),!1;if(1==a)return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg20")),!1;if(2==a)return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg2")),!1;if(3==a)return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg3")),!1;if(4==a)return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg4")),!1;if(!cs.ip_subnet(this.pptpGw,this.pptpMask,this.pptpIp))return s(this.lang_t("wan.msg6")),!1}a=cs.ip(this.pptpServer);if(!this.pptpServer)return s(this.lang_t("vpn.server")+this.lang_t("wan.msg1")),!1;if(!cs.isUrl(this.pptpServer))return s(this.lang_t("vpn.server")+this.lang_t("wan.msg20")),!1;if(0==(a=cs.string(this.pptpUser)))return s(this.lang_t("wan.user")+this.lang_t("wan.msg1")),!1;if(0==(a=cs.string(this.pptpPass)))return s(this.lang_t("wan.pass")+this.lang_t("wan.msg1")),!1;if(1==a)return s(this.lang_t("wan.pass")+this.lang_t("wan.msg22")),!1}if("6"==this.proto){if("1"==this.l2tpMode){if(0==(a=cs.ip(this.l2tpIp)))return s(this.lang_t("wan.ip")+this.lang_t("wan.msg1")),!1;if(1==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg20")),!1;if(2==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg2")),!1;if(3==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg3")),!1;if(4==a)return s(this.lang_t("wan.ip")+this.lang_t("wan.msg4")),!1;if(0==(a=cs.mask(this.l2tpMask)))return s(this.lang_t("wan.mask")+this.lang_t("wan.msg1")),!1;if(1==a)return s(this.lang_t("wan.msg5")),!1;if(0==(a=cs.ip(this.l2tpGw)))return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg1")),!1;if(1==a)return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg20")),!1;if(2==a)return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg2")),!1;if(3==a)return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg3")),!1;if(4==a)return s(this.lang_t("wan.gateway")+this.lang_t("wan.msg4")),!1;if(!cs.ip_subnet(this.l2tpGw,this.l2tpMask,this.l2tpIp))return s(this.lang_t("wan.msg6")),!1}a=cs.ip(this.l2tpServer);if(!this.l2tpServer)return s(this.lang_t("vpn.server")+this.lang_t("wan.msg1")),!1;if(!cs.isUrl(this.l2tpServer))return s(this.lang_t("vpn.server")+this.lang_t("wan.msg20")),!1;if(0==(a=cs.string(this.l2tpUser)))return s(this.lang_t("wan.user")+this.lang_t("wan.msg1")),!1;if(0==(a=cs.string(this.l2tpPass)))return s(this.lang_t("wan.pass")+this.lang_t("wan.msg1")),!1;if(1==a)return s(this.lang_t("wan.pass")+this.lang_t("wan.msg22")),!1}if("0"==this.proto||"4"==this.proto&&"1"==this.pptpMode||"6"==this.proto&&"1"==this.l2tpMode){if(!this.priDns)return s(this.lang_t("wan.pri_dns")+this.lang_t("wan.msg1")),!1;if(99!=(a=cs.ip(this.priDns)))return s(this.lang_t("wan.pri_dns")+this.lang_t("wan.msg20")),!1;if(""!=this.secDns&&99!=(a=cs.ip(this.secDns)))return s(this.lang_t("wan.sec_dns")+this.lang_t("wan.msg20")),!1}}else if(3==t){if(i.iptvEnabled){if(0==(a=cs.num_range(i.internetVid,2,4096)))return s(i.lang_t("iptv.vlan_id")+i.lang_t("wan.msg1")),!1;if(1==a)return s(i.lang_t("iptv.vlan_id")+i.lang_t("rule.msg24")),!1;if(2==a)return s(i.lang_t("iptv.vlan_id")+i.lang_t("iptv.msg3")),!1;if(0==(a=cs.num_range(i.ipPhoneVid,2,4096)))return s(i.lang_t("iptv.ipphone_vlan_id")+i.lang_t("wan.msg1")),!1;if(1==a)return s(i.lang_t("iptv.ipphone_vlan_id")+i.lang_t("rule.msg24")),!1;if(2==a)return s(i.lang_t("iptv.ipphone_vlan_id")+i.lang_t("iptv.msg3")),!1;if(0==(a=cs.num_range(i.iptvVid,2,4096)))return s(i.lang_t("iptv.iptv_vlan_id")+i.lang_t("wan.msg1")),!1;if(1==a)return s(i.lang_t("iptv.iptv_vlan_id")+i.lang_t("rule.msg24")),!1;if(2==a)return s(i.lang_t("iptv.iptv_vlan_id")+i.lang_t("iptv.msg3")),!1;if(!i.tagflag&&(i.ipPhoneVid!=i.iptvVid||i.ipPhonePri!=i.iptvPri))return s(this.lang_t("iptv.msg4")),!1;if(i.internetVid==i.ipPhoneVid||i.internetVid==i.iptvVid)return s(this.lang_t("iptv.msg5")),!1}}else if(4==t){if(0==(a=cs.ssid(this.ssid2g)))return s(this.lang_t("wifi.msg1")),!1;if(4==a)return s(this.lang_t("wifi.msg18")),!1;if(1==a)return s(this.lang_t("wifi.msg20")),!1;if(2==a)return s(this.lang_t("wifi.msg3")),!1;if(""!=this.password2g){if(1==(a=cs.string(this.password2g)))return s(this.lang_t("wifi.msg5")),!1;if(this.password2g.length<8||63<this.password2g.length)return s(this.lang_t("wifi.msg4")),!1}if("0"!=this.wifiDualband&&!this.merge){var g="5GHz";if(0==(a=cs.ssid(this.ssid5g)))return s(g+this.lang_t("wifi.msg1")),!1;if(4==a)return s(this.lang_t("wifi.msg18")),!1;if(1==a)return s(g+this.lang_t("wifi.msg20")),!1;if(2==a)return s(g+this.lang_t("wifi.msg3")),!1;if(""!=this.password5g){if(1==(a=cs.string(this.password5g)))return s(g+this.lang_t("wifi.msg5")),!1;if(this.password5g.length<8||63<this.password5g.length)return s(g+this.lang_t("wifi.msg4")),!1}}this.merge&&"0"!=this.wifiDualband&&(this.ssid5g=this.ssid2g,this.password5g=this.password2g,this.wpa5g=this.wpa,this.wifi5g=this.wifi2g,this.hide5g=this.hide2g)}else if(5==t){if(0==(a=cs.string3(this.loginpass)))return s(this.lang_t("login.msg1")),!1;if(1==a)return s(this.lang_t("common.msg3")),!1}}},errorAlert:function(t){Cstool.Mark({content:t,l_text:this.lang_t("common.back")})},applyFun:function(t){var s=this,a={},i=this.dataCfg;"4g"==globalConfig.modelType&&("1"==this.strategy&&(a.apn=this.apn,a.validation=this.validation,a.user4g=this.user4g,a.pass4g=this.pass4g,a.pinCode=this.pinCode,a.mode4g=this.mode4g,a.dialNum=this.dialNum,"1"!=this.strategy&&(a.domainName=this.domainName)),a.wanStrategy=this.strategy),"2"==this.strategy&&("0"==this.proto?(a.staticIp=this.staticIp,a.staticMask=this.staticMask,a.staticGw=this.staticGw,a.staticMtu=i.staticMtu):"1"==this.proto?a.dhcpMtu=i.dhcpMtu:"3"==s.proto?(a.pppoeUser=this.pppoeUser,a.pppoePass=this.pppoePass,a.pppoeMtu=i.pppoeMtu):"4"==this.proto?(a.pptpMode=this.pptpMode,a.pptpIp=this.pptpIp,a.pptpMask=this.pptpMask,a.pptpGw=this.pptpGw,99==cs.ip(this.pptpServer)?(a.pptpDomainFlag="0",a.pptpServerIp=this.pptpServer):(a.pptpDomainFlag="1",a.pptpServerDomain=this.pptpServer),a.pptpUser=this.pptpUser,a.pptpPass=this.pptpPass,a.pptpMtu=i.pptpMtu,a.pptpMppe=this.pptpMppe?"1":"0",a.pptpMppc=this.pptpMppc?"1":"0"):"6"==this.proto&&(a.l2tpMode=this.l2tpMode,a.l2tpIp=this.l2tpIp,a.l2tpMask=this.l2tpMask,a.l2tpGw=this.l2tpGw,99==cs.ip(this.l2tpServer)?(a.l2tpDomainFlag="0",a.l2tpServerIp=this.l2tpServer):(a.l2tpDomainFlag="1",a.l2tpServerDomain=this.l2tpServer),a.l2tpUser=this.l2tpUser,a.l2tpPass=this.l2tpPass,a.l2tpMtu=i.l2tpMtu),a.proto=this.proto,"0"==this.proto||"4"==this.proto&&"1"==this.pptpMode||"6"==this.proto&&"1"==this.l2tpMode?(a.dnsMode="1",a.priDns=this.priDns,a.secDns=this.secDns):a.dnsMode="0",a.clone="0",a.cloneMac=this.cloneMac),globalConfig.wizardIptvSupport&&(a.iptvEnabled=s.iptvEnabled?"1":"0",a.tagflag=s.tagflag?"1":"0",a.iptvVer=String(s.m_iptvVer),a.internetPri=s.internetPri,a.ipPhonePri=s.ipPhonePri,a.iptvPri=s.iptvPri,a.lan1=s.lan1,a.lan2=s.lan2,a.lan3=s.lan3,a.lan4=s.lan4,a.wlan0=s.wlan0,a.wlan1=s.wlan1,"Indonesia"==globalConfig.softwareType?(a.wlan0_guest=s.wlan0Guest.join(","),a.wlan1_guest=s.wlan1Guest.join(",")):(a.wlan0_guest=s.wlan0_guest,a.wlan1_guest=s.wlan1_guest),a.internetVid=s.internetVid,a.ipPhoneVid=s.ipPhoneVid,a.iptvVid=s.iptvVid),a.ssid=this.ssid2g,a.key=this.password2g,a.wpaMode=this.wpa?"2":"1",a.wifiOff=this.wifi2g?"0":"1",a.hssid=this.hide2g?"1":"0",globalConfig.wifiWepWpaSupport&&(a.key?(a.encryptionWay="5",a.encryptionType="5",a.keyType="1"):a.encryptionWay="0"),a.merge=this.merge?"1":"0","0"!=this.wifiDualband&&(a.ssid5g=this.ssid5g,a.key5g=this.password5g,a.wpaMode5g=this.wpa5g?"2":"1",a.wifiOff5g=this.wifi5g?"0":"1",a.hssid5g=this.hide5g?"1":"0",globalConfig.wifiWepWpaSupport&&(a.key5g?(a.encryptionWay_5g="5",a.encryptionType_5g="5",a.keyType_5g="1"):a.encryptionWay_5g="0")),a.tz=this.tz,a.loginpass=this.loginpass,a.step_index=String(t),a.wizard="1",uiPost.setWizardCfg(a,function(t){var i=5;t.wtime&&"0"!=t.wtime&&(i=Number(t.wtime)),Cstool.Mark({type:"load",time:i,content:s.lang_t("common.effective"),success:function(){Cstool.Flag({content:s.lang_t("common.success_relink"),btnText:s.lang_t("common.ok"),ok:function(){"admin"==s.loginpass?location.href="/phone/home.html":uiPost.logout(a,function(t){setTimeout(function(){var t=location.href;location.href="http://"+t.split("/")[2]},500)})}})}})})},change_mode:function(){var t=this;"3"==this.m_iptvVer?(this.internetVid="621",this.internetPri="0",this.iptvVid="823",this.iptvPri="0",this.ipPhoneVid="822",this.ipPhonePri="0",this.lan1="1",this.lan2="2",this.lan3="3",this.lan4="2",this.wlan0="3",this.wlan0_guest="3",this.wlan1="3",this.wlan1_guest="3",this.tagflag=!0,this.show_internet_vid=!0,this.show_ipphone_vid=!0,this.show_iptv_vid=!0):"2"==this.m_iptvVer?(this.internetVid="500",this.internetPri="0",this.iptvVid="600",this.iptvPri="0",this.ipPhoneVid="400",this.ipPhonePri="0",this.lan1="1",this.lan2="2",this.lan3="3",this.lan4="3",this.wlan0="3",this.wlan0_guest="3",this.wlan1="3",this.wlan1_guest="3",this.tagflag=!0,this.show_internet_vid=!0,this.show_ipphone_vid=!0,this.show_iptv_vid=!0):"6"==this.m_iptvVer?(this.internetVid="11",this.internetPri="0",this.iptvVid="17",this.iptvPri="0",this.ipPhoneVid="14",this.ipPhonePri="0",this.lan1="1",this.lan2="2",this.lan3="3",this.lan4="2",this.wlan0="3",this.wlan0_guest="3",this.wlan1="3",this.wlan1_guest="3",this.tagflag=!0,this.show_internet_vid=!0,this.show_ipphone_vid=!0,this.show_iptv_vid=!0):"7"==this.m_iptvVer?(this.internetVid="101",this.internetPri="0",this.iptvVid="2",this.iptvPri="0",this.ipPhoneVid="201",this.ipPhonePri="0",this.lan1="3",this.lan2="2",this.lan3="3",this.lan4="2",this.wlan0="3",this.wlan0_guest="3",this.wlan1="3",this.wlan1_guest="3",this.tagflag=!0,this.show_internet_vid=!0,this.show_ipphone_vid=!0,this.show_iptv_vid=!1):"1"==this.m_iptvVer?(this.internetVid="10",this.internetPri="0",this.iptvVid="20",this.iptvPri="4",this.ipPhoneVid="30",this.ipPhonePri="0",this.lan1="1",this.lan2="3",this.lan3="3",this.lan4="3",this.wlan0="3",this.wlan0_guest="3",this.wlan1="3",this.wlan1_guest="3",this.tagflag=!0,this.show_internet_vid=!0,this.show_ipphone_vid=!1,this.show_iptv_vid=!0):"4"==this.m_iptvVer?(this.internetVid="35",this.internetPri="0",this.iptvVid="36",this.iptvPri="4",this.ipPhoneVid="37",this.ipPhonePri="5",this.lan1="1",this.lan2="3",this.lan3="2",this.lan4="3",this.wlan0="3",this.wlan0_guest="3",this.wlan1="3",this.wlan1_guest="3",this.tagflag=!0,this.show_internet_vid=!0,this.show_ipphone_vid=!0,this.show_iptv_vid=!0):"5"==this.m_iptvVer?(this.internetVid="1",this.internetPri="0",this.iptvVid="2",this.iptvPri="0",this.ipPhoneVid="2",this.ipPhonePri="0",this.lan1="1",this.lan2="3",this.lan3="3",this.lan4="3",this.wlan0="3",this.wlan0_guest="3",this.wlan1="3",this.wlan1_guest="3",this.tagflag=!1,this.show_internet_vid=!1,this.show_ipphone_vid=!1,this.show_iptv_vid=!1):(this.internetVid=t.initdata.internetVid,this.internetPri=t.initdata.internetPri,this.iptvVid=t.initdata.iptvVid,this.iptvPri=t.initdata.iptvPri,this.ipPhoneVid=t.initdata.ipPhoneVid,this.ipPhonePri=t.initdata.ipPhonePri,this.lan1=t.initdata.lan1,this.lan2=t.initdata.lan2,this.lan3=t.initdata.lan3,this.lan4=t.initdata.lan4,this.wlan0=t.initdata.wlan0,this.wlan0_guest=t.initdata.wlan0_guest,this.wlan1=t.initdata.wlan1,this.wlan1_guest=t.initdata.wlan1_guest,this.tagflag="1"==t.initdata.tagFlag,"Indonesia"==globalConfig.softwareType&&(t.wlan0Guest=t.initdata.wlan0_guest.split(","),t.wlan1Guest=t.initdata.wlan1_guest.split(",")),this.show_internet_vid=!0,this.show_ipphone_vid=!0,this.show_iptv_vid=!0),0==this.m_iptvVer?(this.edit_disable=!1,this.tag_class=!1):(this.edit_disable=!0,this.tag_class=!0,"Indonesia"==globalConfig.softwareType&&(t.wlan0Guest=["3","3","3","3"],t.wlan1Guest=["3","3","3","3"]))},operatFun:function(t){if("back"==t)globalConfig.wizardIptvSupport||4!=this.dotIdx?globalConfig.projectOwnerTw&&6==this.dotIdx?this.dotIdx=4:1==this.dotIdx?location.href="http://"+location.host+"/phone/home.html"+get_token_from_url():this.dotIdx--:this.dotIdx=2;else if(0!=this.rulesVeriy(this.dotIdx)){if(4==this.dotIdx&&0==this.wifiPassVeriy())return!1;if(6==this.dotIdx)return void this.applyFun();globalConfig.wizardIptvSupport||2!=this.dotIdx?globalConfig.projectOwnerTw&&4==this.dotIdx?this.dotIdx=6:this.dotIdx++:this.dotIdx=4}},changeUseWifi:function(t){this.loginpass=t?this.password2g:""},abledFun:function(){this.wifi2g?(this.ssid_2g=!1,this.pass_2g=!1,this.hide2gdis=!1):(this.ssid_2g=!0,this.pass_2g=!0,this.hide2gdis=!0),this.wifi5g?(this.ssid_5g=!1,this.pass_5g=!1,this.hide5gdis=!1):(this.ssid_5g=!0,this.pass_5g=!0,this.hide5gdis=!0)}}}</script><script src="/static/js/main.js"></script></body></html>

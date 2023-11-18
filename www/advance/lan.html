@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="proma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no cache" />
+    <meta http-equiv="expires" content="0" />
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <link rel="stylesheet" href="/static/css/main.css" />
+    <link rel="stylesheet" href="/static/css/common.css" />
+    <link rel="stylesheet" href="/static/css/advance_menu.css" />
+    <style>
+      input[type="text"]:disabled {
+        cursor: not-allowed;
+        background-color: #eee;
+        border-color: #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="text/x-template" id="main">
+      <div>
+        <!--子菜单-->
+        <adv-child-menu childType="network"></adv-child-menu>
+        <div class="advance-box">
+      	<x-help :text="lang_t('network.help')"></x-help>
+        	<br><br>
+      	<div class="fun-box">
+      	  <table class="table">
+      	    <tbody>
+      		<tr v-show="dhcpShow">
+      		  <td class="fun-left">{{ lang_t('network.mode') }}</td>
+      		  <td>
+      			<select v-model="netMode">
+      			  <option value="1">{{ lang_t('wan.auto') }}</option>
+      			  <option value="0">{{ lang_t('wan.manual') }}</option>
+      			</select>
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.ip') }}</td>
+      		  <td>
+      			<input type="text" v-model="lanIp" v-verify="formRules" data-name="lanIp" maxlength="15" @input="autoChangePool" :disabled="netMode=='1'">
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left">{{ lang_t('wan.mask') }}</td>
+      		  <td>
+      			<input type="text" v-model="lanNetmask" v-verify="formRules" data-name="lanNetmask" maxlength="15" @input="autoChangePool" :disabled="netMode=='1'">
+      		  </td>
+      		</tr>
+      		<tr v-show="dhcpShow">
+      		  <td class="fun-left">{{ lang_t('wan.gateway') }}</td>
+      		  <td>
+      			<input type="text" v-model="gw" v-verify="formRules" data-name="gw" maxlength="15" :disabled="netMode=='1'">
+      		  </td>
+      		</tr>
+      		<tr v-show="dhcpShow">
+      		  <td class="fun-left">{{ lang_t('wan.pri_dns') }}</td>
+      		  <td>
+      			<input type="text" v-model="priDns" v-verify="formRules" data-name="priDns" maxlength="15" :disabled="netMode=='1'">
+      		  </td>
+      		</tr>
+      		<tr v-show="dhcpShow">
+      		  <td class="fun-left">{{ lang_t('wan.sec_dns') }}</td>
+      		  <td>
+      			<input type="text" v-model="secDns" v-verify="formRules" data-name="secDns" maxlength="15" :disabled="netMode=='1'">
+      			&nbsp;&nbsp;
+      			<small>({{ lang_t('wan.optional') }})</small>
+      		  </td>
+      		</tr>
+      		<tr v-show="!dhcpShow">
+      		  <td class="fun-left">{{ lang_t('network.dhcp_server') }}</td>
+      		  <td>
+      			<x-switch v-model="dhcpServer"></x-switch>
+      		  </td>
+      		</tr>
+      		<tr v-show="dhcpServer && !dhcpShow">
+      		  <td class="fun-left">{{ lang_t('network.start_ip') }}</td>
+      		  <td>
+      			<input type="text" v-model="dhcpStart" v-verify="formRules" data-name="dhcpStart" maxlength="15">
+      		  </td>
+      		</tr>
+      		<tr v-show="dhcpServer && !dhcpShow">
+      		  <td class="fun-left">{{ lang_t('network.end_ip') }}</td>
+      		  <td>
+      			<input type="text" v-model="dhcpEnd" v-verify="formRules" data-name="dhcpEnd" maxlength="15">
+      		  </td>
+      		</tr>
+      		<tr v-show="dhcpServer && !dhcpShow">
+      		  <td class="fun-left">{{ lang_t('network.lease_time') }}</td>
+      		  <td>
+      			<select v-model="dhcpLease">
+      			  <option value="86400" selected>1 {{ lang_t('network.day') }}</option>
+      			  <option value="7200">2 {{ lang_t('network.hours') }}</option>
+      			  <option value="3600">1 {{ lang_t('network.hour') }}</option>
+      			  <option value="900"> 15 {{ lang_t('network.minutes') }}</option>
+      			  <option value="300">5 {{ lang_t('network.minutes') }}</option>
+      			</select>
+      		  </td>
+      		</tr>
+      		<tr>
+      		  <td class="fun-left"></td>
+      		  <td>
+      			<button type="button" class="btn" @click="handleSubmit">{{ lang_t('common.apply') }}</button>
+      		  </td>
+      		</tr>
+      		</tbody>
+      	  </table>
+      	  <x-test ref="verifi"></x-test>
+        	</div>
+        </div>
+      </div>
+    </script>
+    <script src="/plugin/vue.js"></script>
+    <script src="/plugin/jquery-3.2.1.min.js"></script>
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/layout.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/topicurl.js"></script>
+    <script>
+      var cs_main = {
+        template: "#main",
+        data: function () {
+          return {
+            globalConfig: globalConfig,
+            lang: $.lang,
+            lang_t: lang_t,
+            wanIp: "",
+            wanNetmask: "",
+            lanIp: "",
+            lanNetmask: "",
+            dhcpShow: !1,
+            dhcpServer: !1,
+            dhcpStart: "",
+            dhcpEnd: "",
+            dhcpLease: "",
+            netMode: "",
+            gw: "",
+            priDns: "",
+            secDns: "",
+          };
+        },
+        computed: {
+          formRules: function () {
+            var l = this;
+            return {
+              lanIp: function (n, a) {
+                var t = cs.ip(n);
+                n || a(l.lang_t("wan.ip") + l.lang_t("wan.msg1")),
+                  0 == t
+                    ? a(l.lang_t("wan.ip") + l.lang_t("wan.msg1"))
+                    : 1 == t
+                    ? a(l.lang_t("wan.ip") + l.lang_t("wan.msg20"))
+                    : 2 == t
+                    ? a(l.lang_t("wan.ip") + l.lang_t("wan.msg2"))
+                    : 3 == t
+                    ? a(l.lang_t("wan.ip") + l.lang_t("wan.msg3"))
+                    : 4 == t
+                    ? a(l.lang_t("wan.ip") + l.lang_t("wan.msg4"))
+                    : cs.ip_subnet2(n, l.lanNetmask, l.wanIp, l.wanNetmask)
+                    ? a(l.lang_t("network.msg8"))
+                    : 1 == cs.ip_subnet(n, l.lanNetmask, l.wanIp)
+                    ? a(l.lang_t("network.msg11"))
+                    : a();
+              },
+              lanNetmask: function (n, a) {
+                var t = cs.mask(n);
+                n || a(l.lang_t("wan.mask") + l.lang_t("wan.msg1")),
+                  0 == t || 1 == t
+                    ? a(l.lang_t("wan.msg5"))
+                    : "255.255.255.254" == n
+                    ? a(l.lang_t("wan.msg5"))
+                    : a();
+              },
+              gw: function (n, a) {
+                if (l.dhcpShow && "0" == l.netMode) {
+                  var t = cs.ip(n),
+                    e = cs.ip_subnet(l.gw, l.lanNetmask, l.lanIp);
+                  0 == t
+                    ? a(l.lang_t("wan.gateway") + l.lang_t("wan.msg1"))
+                    : 1 == t
+                    ? a(l.lang_t("wan.gateway") + l.lang_t("wan.msg20"))
+                    : 2 == t
+                    ? a(l.lang_t("wan.gateway") + l.lang_t("wan.msg2"))
+                    : 3 == t
+                    ? a(l.lang_t("wan.gateway") + l.lang_t("wan.msg3"))
+                    : 4 == t
+                    ? a(l.lang_t("wan.gateway") + l.lang_t("wan.msg4"))
+                    : 1 != e
+                    ? a(l.lang_t("wan.gateway") + l.lang_t("network.msg14"))
+                    : a();
+                } else a();
+              },
+              priDns: function (n, a) {
+                l.dhcpShow && "0" == l.netMode
+                  ? n
+                    ? 99 != cs.ip(n)
+                      ? a(l.lang_t("wan.pri_dns") + l.lang_t("wan.msg20"))
+                      : a()
+                    : a(l.lang_t("wan.pri_dns") + l.lang_t("wan.msg1"))
+                  : a();
+              },
+              secDns: function (n, a) {
+                l.dhcpShow && "0" == l.netMode
+                  ? "" == n
+                    ? a()
+                    : 99 != cs.ip(n)
+                    ? a(l.lang_t("wan.sec_dns") + l.lang_t("wan.msg20"))
+                    : a()
+                  : a();
+              },
+              dhcpStart: function (n, a) {
+                var t = cs.ip(n, l.lanNetmask),
+                  e = 1;
+                if (l.dhcpShow) a();
+                else {
+                  if ("" != n && "" != l.dhcpEnd) {
+                    var s = n.split("."),
+                      r = l.dhcpEnd.split(".");
+                    Number(s[0]) > Number(r[0])
+                      ? (e = 0)
+                      : Number(s[0]) == Number(r[0]) &&
+                        Number(s[1]) > Number(r[1])
+                      ? (e = 0)
+                      : Number(s[0]) == Number(r[0]) &&
+                        Number(s[1]) == Number(r[1]) &&
+                        Number(s[2]) > Number(r[2])
+                      ? (e = 0)
+                      : Number(s[0]) == Number(r[0]) &&
+                        Number(s[1]) == Number(r[1]) &&
+                        Number(s[2]) == Number(r[2]) &&
+                        Number(s[3]) > Number(r[3]) &&
+                        (e = 0);
+                  }
+                  n || a(l.lang_t("network.start_ip") + l.lang_t("wan.msg1")),
+                    0 == t
+                      ? a(l.lang_t("network.start_ip") + l.lang_t("wan.msg1"))
+                      : 1 == t
+                      ? a(l.lang_t("network.start_ip") + l.lang_t("wan.msg20"))
+                      : 2 == t
+                      ? a(l.lang_t("network.start_ip") + l.lang_t("wan.msg2"))
+                      : 3 == t
+                      ? a(l.lang_t("network.start_ip") + l.lang_t("wan.msg3"))
+                      : 4 == t
+                      ? a(l.lang_t("network.start_ip") + l.lang_t("wan.msg4"))
+                      : 0 == cs.ip_subnet(n, l.lanNetmask, l.lanIp)
+                      ? a(
+                          l.lang_t("network.start_ip") +
+                            l.lang_t("network.msg9")
+                        )
+                      : 0 == e
+                      ? a(l.lang_t("network.msg10"))
+                      : a();
+                }
+              },
+              dhcpEnd: function (n, a) {
+                var t = cs.ip(n, l.lanNetmask);
+                l.dhcpShow
+                  ? a()
+                  : (n || a(l.lang_t("network.end_ip") + l.lang_t("wan.msg1")),
+                    0 == t
+                      ? a(l.lang_t("network.end_ip") + l.lang_t("wan.msg1"))
+                      : 1 == t
+                      ? a(l.lang_t("network.end_ip") + l.lang_t("wan.msg20"))
+                      : 2 == t
+                      ? a(l.lang_t("network.end_ip") + l.lang_t("wan.msg2"))
+                      : 3 == t
+                      ? a(l.lang_t("network.end_ip") + l.lang_t("wan.msg3"))
+                      : 4 == t
+                      ? a(l.lang_t("network.end_ip") + l.lang_t("wan.msg4"))
+                      : 0 == cs.ip_subnet(n, l.lanNetmask, l.lanIp)
+                      ? a(l.lang_t("network.end_ip") + l.lang_t("network.msg9"))
+                      : a());
+              },
+            };
+          },
+        },
+        created: function () {
+          var a = this;
+          "br" == this.globalConfig.opmode || "rpt" == this.globalConfig.opmode
+            ? (this.dhcpShow = !0)
+            : (this.dhcpShow = !1),
+            uiPost.getLanCfg(function (n) {
+              (a.wanIp = n.wanIp),
+                (a.wanNetmask = n.wanNetmask),
+                (a.lanIp = n.lanIp),
+                (a.lanNetmask = n.lanNetmask),
+                (a.dhcpStart = n.dhcpStart),
+                (a.dhcpEnd = n.dhcpEnd),
+                a.dhcpShow
+                  ? ((a.netMode = n.netMode),
+                    (a.gw = n.gw),
+                    (a.priDns = n.priDns),
+                    (a.secDns = n.secDns),
+                    a.autoChangePool())
+                  : ((a.dhcpServer = "1" == n.dhcpServer),
+                    (a.dhcpLease = n.dhcpLease));
+            });
+        },
+        methods: {
+          autoChangePool: function () {
+            if (99 == cs.ip(this.lanIp) && 99 == cs.mask(this.lanNetmask)) {
+              var n = this.lanIp.split(".")[0],
+                a = this.lanIp.split(".")[1],
+                t = this.lanIp.split(".")[2],
+                e = this.lanIp.split(".")[3];
+              if (Number(254 < e)) return !1;
+              var s = this.lanNetmask.split(".")[0],
+                r = this.lanNetmask.split(".")[1],
+                l = this.lanNetmask.split(".")[2],
+                g = this.lanNetmask.split(".")[3],
+                i =
+                  16777216 * Number(n) +
+                  (Number(a) << 16) +
+                  (Number(t) << 8) +
+                  Number(e),
+                p =
+                  16777216 * Number(s) +
+                  (Number(r) << 16) +
+                  (Number(l) << 8) +
+                  Number(g),
+                m = Math.floor(i / 4),
+                o = Number(i % 4),
+                w = Math.floor(p / 4),
+                _ = Number(p % 4),
+                h = 4 * Number(m & w) + Number(o & _),
+                u = 1 + (i & ~p),
+                c = 0;
+              c =
+                u < 256 && 128 < u
+                  ? h + (u = 1)
+                  : (128 < Number(e) && (u = 1), h + u);
+              var N = Math.floor(Number(c / 16777216)),
+                d = Math.floor(Number(c % 16777216) / 65536),
+                b = Math.floor(Number(c % 65536) / 256),
+                f = Math.floor(Number(c % 65536) % 256);
+              this.dhcpStart = N + "." + d + "." + b + "." + f;
+              var k = Math.floor(h / 2),
+                v = Number(h % 2),
+                S = Number(v | ~p % 2) + 2 * Number(k | (~p / 2)) - 1,
+                I = 1 + (i & ~p);
+              ((129 < I && 4294967040 == p) || 129 == I) && (S = h + I - 2),
+                S == i && S--;
+              var M = Math.floor(Number(S / 16777216)),
+                z = Math.floor(Number(S % 16777216) / 65536),
+                D = Math.floor(Number(S % 65536) / 256),
+                C = Math.floor(Number(S % 65536) % 256);
+              this.dhcpEnd = M + "." + z + "." + D + "." + C;
+            }
+          },
+          zip: function (n, a, t, e) {
+            return (
+              16777216 * Number(n) +
+              (Number(a) << 16) +
+              (Number(t) << 8) +
+              Number(e)
+            );
+          },
+          checkpPrivateNetwork: function (n) {
+            var a = this,
+              t = a.zip("0", "0", "0", "0"),
+              e = a.zip("127", "255", "255", "255"),
+              s = a.zip("128", "0", "0", "0"),
+              r = a.zip("191", "255", "255", "255"),
+              l = a.zip("192", "0", "0", "0"),
+              g = a.zip("233", "255", "255", "255"),
+              i = a.zip("10", "0", "0", "0"),
+              p = a.zip("10", "255", "255", "255"),
+              m = a.zip("172", "16", "0", "0"),
+              o = a.zip("172", "31", "255", "255"),
+              w = a.zip("192", "168", "0", "0"),
+              _ = a.zip("192", "168", "255", "255"),
+              h = a.zip(
+                n.split(".")[0],
+                n.split(".")[1],
+                n.split(".")[2],
+                n.split(".")[3]
+              );
+            return t < h && h < e
+              ? !(p < h || h < i)
+              : s < h && h < r
+              ? !(o < h || h < m)
+              : l < h && h < g && !(_ < h || h < w);
+          },
+          handleSubmit: function () {
+            var e = this;
+            e.$refs.verifi.verify(this.formRules, function (n) {
+              if (n) {
+                var a = {},
+                  t = e.lanIp;
+                (a.lanIp = e.lanIp),
+                  (a.lanNetmask = e.lanNetmask),
+                  e.dhcpShow
+                    ? ((a.netMode = e.netMode),
+                      (a.gw = e.gw),
+                      (a.priDns = e.priDns),
+                      (a.secDns = e.secDns))
+                    : ((a.dhcpServer = e.dhcpServer ? "1" : "0"),
+                      (a.dhcpLease = e.dhcpLease)),
+                  (a.dhcpStart = e.dhcpStart),
+                  (a.dhcpEnd = e.dhcpEnd),
+                  uiPost.setLanCfg(a, function (n) {
+                    var a = 10;
+                    (n.wtime || "0" == n.wtime) && (a = n.wtime),
+                      Cstool.Count(a, "js", function () {
+                        location.href = "http://" + t + "/login.html";
+                      });
+                  });
+              }
+            });
+          },
+        },
+      };
+    </script>
+    <script src="/static/js/main.js"></script>
+  </body>
+</html>

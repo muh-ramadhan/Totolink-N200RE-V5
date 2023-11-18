@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="proma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no cache" />
+    <meta http-equiv="expires" content="0" />
+    <meta
+      content="width=device-width,initial-scale=1,user-scalable=no"
+      name="viewport"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1"
+    />
+    <link rel="stylesheet" href="/static/css/phone/style.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="text/x-template" id="main">
+      <div>
+        <div class="toper">
+      	<phone-back type="custom" :title="lang_t('menu.devices')" @on-click="backFun"></phone-back>
+        </div>
+        <div class="content-tab">
+      	<div class="tab" @click="pageChange(1)" v-show="listType == 'main' || listType == 'white'">
+      	  <div class="tab-l"><img src="/static/images/phone/user_on.png"></div>
+      	  <div class="tab-c">{{ lang_t('menu.devices') }}</div>
+      	  <div class="tab-r" v-show="listType == 'main'"><img src="/static/images/phone/sign_right.png"></div>
+      	</div>
+      	<div class="tab" @click="pageChange(0)" v-show="listType == 'main' || listType == 'black'">
+      	  <div class="tab-l"><img src="/static/images/phone/user_off.png"></div>
+      	  <div class="tab-c">{{ lang_t('menu.devices_deny') }}</div>
+      	  <div class="tab-r" v-show="listType == 'main'"><img src="/static/images/phone/sign_right.png"></div>
+      	</div>
+        </div>
+        <div class="content-list" id="devices_show" v-if="listType == 'black'" :style="{height: listHeight,'overflow-y':'auto'}">
+          <div class="list" v-for="(data,v) in black_List" @click="modifyDevie(data,v,'black')">
+      	  <div class="list-l" style="padding-top: 20px;">
+      	    <img src="/static/images/phone/phone_dis.png" v-if="data.deviceType == 'mobile'||data.linkType != 'PC'">
+      	    <img src="/static/images/phone/pc_dis.png" v-else>
+      	  </div>
+      	  <div class="list-c" style="width: 55%;">
+      		<p>{{ data.name ? data.name : lang_t('common.aonymous_user')}}</p>
+      	    <p>MAC: {{ data.mac }}</p>
+      	    <p>IP: {{ data.ip }}</p>
+      	  </div>
+      	  <div class="list-r-img">
+      		<img src="/static/images/phone/wifi2g.png" v-if="data.linkType == '2g'">
+      		<img src="/static/images/phone/wifi5g.png" v-else-if="data.linkType == '5g'">
+      		<img src="/static/images/map/lan.png" style="padding-top:10px;padding-left: 5px;" v-else-if="data.linkType == 'PC'">
+      		<p v-else-if="data.linkType == ''"></p>
+      	  </div>
+      	  <div class="list-r" style="padding-top: 35px;">
+      	    <img src="/static/images/phone/sign_right.png">
+      	  </div>
+          </div>
+        </div>
+        <div class="content-list" id="devices_show" v-else-if="listType == 'white'" :style="{height: listHeight,'overflow-y':'auto'}">
+          <div class="list" v-for="(data,v) in white_List" @click="modifyDevie(data,v,'white')">
+      	  <div class="list-l" style="padding-top: 20px;">
+      	    <img src="/static/images/phone/phone.png" v-if="data.deviceType == 'mobile'||data.linkType != 'PC'">
+      	    <img src="/static/images/phone/pc.png" v-else>
+      	  </div>
+      	  <div class="list-c" style="width: 55%;">
+      		<p>{{ data.name ? data.name : lang_t('common.aonymous_user') }}</p>
+      	    <p>MAC: {{ data.mac }}</p>
+      	    <p>IP: {{ data.ip }}</p>
+      	  </div>
+      	  <div class="list-r-img">
+      		<img src="/static/images/phone/wifi2g.png" v-if="data.linkType == '2g'">
+      		<img src="/static/images/phone/wifi5g.png" v-else-if="data.linkType == '5g'">
+      		<img src="/static/images/map/lan.png" style="padding-top:10px;padding-left: 5px;" v-else-if="data.linkType == 'PC'">
+      		<p v-else-if="data.linkType == ''"></p>
+      	  </div>
+      	  <div class="list-r" style="padding-top: 35px;">
+      	    <img src="/static/images/phone/sign_right.png">
+      	  </div>
+          </div>
+        </div>
+        <div class="content" v-else-if="listType == 'modify'">
+      	<div class="group">
+      	  <div class="item-l">{{ lang_t('rule.device_name') }}</div>
+      	  <div class="item-r">
+      		<input type="text" v-model="deviceName" :disable="disableEdit" maxlength="32">
+      	  </div>
+      	</div>
+      	<div class="space"></div>
+      	<div class="footer" v-if="!disableEdit">
+      	  <button class="btn btn-gray" @click="applyFun">{{ lang_t('rule.edit') }}</button><br>&nbsp;</br>
+        	  <button class="btn btn-red" :style="{background: btnColor}" @click="setDevieNet">{{ tempType == 'white' ? lang_t('device.off') : lang_t('device.on') }}</button>
+      	</div>
+      	<div class="space"></div>
+        </div>
+      </div>
+    </script>
+    <script src="/plugin/vue.js"></script>
+    <script src="/plugin/jquery-3.2.1.min.js"></script>
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/phone_layout.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/topicurl.js"></script>
+    <script>
+      var cs_main = {
+        template: "#main",
+        data: function () {
+          return {
+            globalConfig: globalConfig,
+            lang: $.lang,
+            lang_t: lang_t,
+            listHeight: "300px",
+            data: [],
+            white_List: [],
+            black_List: [],
+            listType: "main",
+            tempType: "white",
+            deviceName: "",
+            btnColor: "",
+            tempIdx: 0,
+            disableEdit: !1,
+          };
+        },
+        computed: {},
+        created: function () {
+          var t = this;
+          (t.listHeight = 0.65 * window.innerHeight + "px"),
+            ("rpt" != t.globalConfig.opmode && "br" != t.globalConfig.opmode) ||
+              (t.disableEdit = !0),
+            t.getDeviceCfg(),
+            setInterval(function () {
+              t.getDeviceCfg();
+            }, 3e3);
+        },
+        mounted: function () {},
+        methods: {
+          backFun: function () {
+            "modify" == this.listType
+              ? (this.listType = this.tempType)
+              : "main" == this.listType
+              ? (location.href = "/phone/home.html" + get_token_from_url())
+              : (this.listType = "main");
+          },
+          getDeviceCfg: function (t) {
+            var e = this;
+            uiPost.getAccessDeviceCfg(function (t) {
+              (e.data = t),
+                (e.white_List = []),
+                (e.black_List = []),
+                (e.white_List = t.white),
+                (e.black_List = t.black);
+            });
+          },
+          pageChange: function (t) {
+            var e = this;
+            (this.listType = 1 == t ? "white" : "black"),
+              setTimeout(function () {
+                $("#devices_show").css(
+                  "padding-top",
+                  $(".header-main").height() + e.height + "px"
+                );
+              }, 1);
+          },
+          modifyDevie: function (t, e, i) {
+            (this.tempType = i),
+              (this.tempIdx = e),
+              (this.deviceName = t.name),
+              (this.btnColor = "black" == i ? "#6fc969" : ""),
+              (this.listType = "modify");
+          },
+          applyFun: function () {
+            var t = {};
+            1 != cs.string(this.deviceName)
+              ? ((t.idx = String(this.tempIdx + 1)),
+                (t.name = this.deviceName),
+                (t.modelType = this.tempType),
+                this.postData(t))
+              : Cstool.Mark({
+                  content:
+                    this.lang_t("rule.device_name") + this.lang_t("rule.msg22"),
+                  l_text: this.lang_t("common.back"),
+                });
+          },
+          setDevieNet: function (t) {
+            var e = {};
+            (e.modelType = "white" == this.tempType ? "black" : "white"),
+              this.postData(e);
+          },
+          postData: function (t) {
+            "white" == this.tempType
+              ? (t.mac = this.white_List[this.tempIdx].mac)
+              : (t.mac = this.black_List[this.tempIdx].mac),
+              (t.addEffect = "0"),
+              uiPost.setAccessDeviceCfg(t, function (t) {
+                Cstool.Mark({
+                  type: "load",
+                  time: 2,
+                  content: this.lang_t("common.effective"),
+                  success: function () {
+                    Cstool.Flag({
+                      content: this.lang_t("common.set_success"),
+                      btnText: this.lang_t("common.back"),
+                      ok: function () {
+                        location.href = location.href;
+                      },
+                    });
+                  },
+                });
+              });
+          },
+        },
+      };
+    </script>
+    <script src="/static/js/main.js"></script>
+  </body>
+</html>
